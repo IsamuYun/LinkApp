@@ -7,10 +7,53 @@ import ProfileScreen from './ProfileScreen';
 import PersonScreen from './PersonScreen';
 import ChatScreen from './ChatScreen';
 
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faLink } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faIdBadge, faUser } from '@fortawesome/free-regular-svg-icons';
+
+const users = {
+  1: {
+    uri: require('../assets/icon/Amnesia-anime.png'),
+    name: 'Amnesia',
+  },
+  2: {
+    uri: require('../assets/icon/Avatar-The-Last-Airbender.png'),
+    name: 'Airbender',
+  },
+  3: {
+    uri: require('../assets/icon/Bleach-anime.png'),
+    name: 'Bleach',
+  },
+  4: {
+    uri: require('../assets/icon/Fairy-Tail.png'),
+    name: 'Fairy Tail',
+  },
+  5: {
+    uri: require('../assets/icon/Dragonball-Goku.png'),
+    name: 'GoKu',
+  },
+  6: {
+    uri: require('../assets/icon/Fullmetal-Alchemist.png'),
+    name: 'Edward',
+  },
+  7: {
+    uri: require('../assets/icon/Inuyasha.png'),
+    name: 'Inuyasha',
+  },
+  8: {
+    uri: require('../assets/icon/Naruto.png'),
+    name: 'Naruto',
+  }
+};
+
+
 export class HomeScreen extends Component {
   
-  moveToPersonScreen = () => {
-    this.props.navigation.navigate("Person");
+  moveToPersonScreen = (id) => {
+    this.props.navigation.navigate("Person", {
+      uri: users[id].uri,
+      name: users[id].name
+    });
   }
   
   render() {
@@ -28,27 +71,27 @@ export class HomeScreen extends Component {
         </View>
         
         <View style={styles.icon_banner}>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('1')}>
             <Image style={styles.head_icon}
-              source={require('../assets/icon/Amnesia-anime.png')}
+              source={users['1'].uri}
             />
           </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('2')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Avatar-The-Last-Airbender.png')}
+            source={users['2'].uri}
           />
           </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('3')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Bleach-anime.png')}
+            source={users['3'].uri}
           />
           </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('4')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Fairy-Tail.png')}
+            source={users['4'].uri}
           />
           </TouchableHighlight>
           <Button style={styles.head_button}
@@ -63,28 +106,28 @@ export class HomeScreen extends Component {
         </View>
 
         <View style={styles.icon_banner}>
-        <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+        <TouchableHighlight onPress={() => this.moveToPersonScreen('5')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Dragonball-Goku.png')}
+            source={users['5'].uri}
           />
           </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('6')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Fullmetal-Alchemist.png')}
+            source={users['6'].uri}
           />
           </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('7')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Inuyasha.png')}
+            source={users['7'].uri}
           />
           </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen()}>
+          <TouchableHighlight onPress={() => this.moveToPersonScreen('8')}>
           
           <Image style={styles.head_icon}
-            source={require('../assets/icon/Naruto.png')}
+            source={users['8'].uri}
           />
           </TouchableHighlight>
           <Button style={styles.head_button}
@@ -144,8 +187,36 @@ const styles = StyleSheet.create({
 });
 
 export const HomeStack = createBottomTabNavigator({
-  Home: HomeScreen,
-  Person: PersonScreen,
-  Chat: ChatScreen,
-  Profile: ProfileScreen
+  Home: {
+    screen: HomeScreen,
+    navigationOptions: {
+      tabBarIcon: ({ tintColor }) => {
+        return <FontAwesomeIcon icon={ faLink } color={ tintColor } size={20}/>;
+      },
+    },
+  },
+  Person: {
+    screen: PersonScreen,
+    navigationOptions: {
+      tabBarIcon: ({tintColor}) => {
+        return <FontAwesomeIcon icon={ faIdBadge } color={ tintColor } size={20}/>;
+      }
+    },
+  },
+  Chat: {
+    screen: ChatScreen,
+    navigationOptions: {
+      tabBarIcon: ({tintColor}) => {
+        return <FontAwesomeIcon icon={ faComments } color={ tintColor } size={20}/>;
+      }
+    },
+  },
+  Profile: {
+    screen: ProfileScreen,
+    navigationOptions: {
+      tabBarIcon: ({tintColor}) => {
+        return <FontAwesomeIcon icon={ faUser } color={ tintColor } size={20}/>;
+      }
+    },
+  }
 });

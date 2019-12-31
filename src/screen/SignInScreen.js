@@ -51,11 +51,11 @@ export class SignInScreen extends Component {
   response(message) {
     let data_str = JSON.stringify(message);
     console.log(data_str);
-    this.props.navigation.navigate("Home");
   }
 
   async onUserLogin() {
-    this.signIn();
+    // this.signIn();
+    this.props.navigation.navigate("Home");
   }
 
   onSignUp() {
@@ -79,6 +79,7 @@ export class SignInScreen extends Component {
             <TextInput style={ {width: 340, height: 40, fontSize: 18} }
               placeholder="Password"
               onChangeText={(password) => this.setState({password})}
+              secureTextEntry={true}
               value={this.state.password}
             />
             <Button 
