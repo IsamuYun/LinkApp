@@ -151,6 +151,10 @@ const styles = StyleSheet.create({
   }
 });
 
+HomeStack.navigationOptions = {
+  tabBarLabel: 'Home',
+};
+
 export const AppNavigator = createStackNavigator(
   {
     SignIn: SignInScreen,
@@ -161,6 +165,8 @@ export const AppNavigator = createStackNavigator(
     initialRouteName: 'SignIn',
   }
 );
+
+
   
 export default createAppContainer(AppNavigator);
   

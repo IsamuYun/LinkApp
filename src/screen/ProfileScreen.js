@@ -6,35 +6,59 @@ import { faDollarSign, faStar } from '@fortawesome/free-solid-svg-icons';
 const users = {
   1: {
     uri: require('../assets/icon/Amnesia-anime.png'),
-    name: 'Amnesia',
+    name: 'Heroine',
+    school: 'Amnesia',
+    skill: 'Cooking',
+    learn: 'Psychology',
   },
   2: {
     uri: require('../assets/icon/Avatar-The-Last-Airbender.png'),
-    name: 'Airbender',
+    name: 'Sokka',
+    school: 'the Last Airbender',
+    skill: 'Karate',
+    learn: 'Magic',
   },
   3: {
     uri: require('../assets/icon/Bleach-anime.png'),
-    name: 'Bleach',
+    name: 'Ichigo Kurosaki',
+    school: 'Karakura High School',
+    skill: 'Swordmanship',
+    learn: 'Japanese',
   },
   4: {
     uri: require('../assets/icon/Fairy-Tail.png'),
-    name: 'Fairy Tail',
+    name: 'Natsu Dragneel',
+    school: 'Fairy Tail',
+    skill: 'Fire Magic',
+    learn: 'Water Magic',
   },
   5: {
     uri: require('../assets/icon/Dragonball-Goku.png'),
     name: 'GoKu',
+    school: 'Dragon Ball',
+    skill: 'Kamehameha',
+    learn: 'English',
   },
   6: {
     uri: require('../assets/icon/Fullmetal-Alchemist.png'),
     name: 'Edward',
+    school: 'Fullmetal-Alchemist',
+    skill: 'Alchemy',
+    learn: 'Cooking',
   },
   7: {
     uri: require('../assets/icon/Inuyasha.png'),
     name: 'Inuyasha',
+    school: 'Kagome',
+    skill: 'Swordmanship',
+    learn: 'Archery',
   },
   8: {
     uri: require('../assets/icon/Naruto.png'),
     name: 'Naruto',
+    school: 'Team Kakashi',
+    skill: 'Rasengan',
+    learn: 'Flying Thunder God Slash',
   }
 };
 
@@ -42,7 +66,10 @@ export default class ProfileScreen extends Component {
   moveToPersonScreen = (id) => {
     this.props.navigation.navigate("Person", {
       uri: users[id].uri,
-      name: users[id].name
+      name: users[id].name,
+      school: users[id].school,
+      skill: users[id].skill,
+      learn: users[id].learn,
     });
   }
 
@@ -69,9 +96,9 @@ export default class ProfileScreen extends Component {
         </View>
         <View style={ styles.text_view }>
           <Text style={ styles.normal_text }>I'm class of 2020.</Text>
-          <Text style={ styles.normal_text }>My school is </Text>
-          <Text style={ styles.normal_text }>I can teach _____________ </Text>
-          <Text style={ styles.normal_text }>I want to learn ____________ </Text>
+          <Text style={ styles.normal_text }>My school is Dragon Ball.</Text>
+          <Text style={ styles.normal_text }>I can teach Kamehameha.</Text>
+          <Text style={ styles.normal_text }>I want to learn English.</Text>
         </View>
         <View style={ styles.favorite_title }>
           <FontAwesomeIcon icon={ faStar } style={{color: 'dodgerblue'}} size={16}/>

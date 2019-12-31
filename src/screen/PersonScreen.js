@@ -35,9 +35,9 @@ export default class PersonScreen extends Component {
         </View>
         <View style={ styles.text_view }>
           <Text style={ styles.normal_text }>I'm class of 2020.</Text>
-          <Text style={ styles.normal_text }>My school is </Text>
-          <Text style={ styles.normal_text }>I can teach _____________ </Text>
-          <Text style={ styles.normal_text }>I want to learn ____________ </Text>
+          <Text style={ styles.normal_text }>My school is {navigation.getParam('school', 'Dragon Ball')}.</Text>
+          <Text style={ styles.normal_text }>I can teach {navigation.getParam('skill', 'Kamehameha')}.</Text>
+          <Text style={ styles.normal_text }>I want to learn {navigation.getParam('learn', 'English')}.</Text>
           <Text style={ styles.normal_text }>Leave a view:</Text>
           <TextInput style={ styles.review_text }
               placeholder="Leave a view"

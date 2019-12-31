@@ -14,35 +14,59 @@ import { faComments, faIdBadge, faUser } from '@fortawesome/free-regular-svg-ico
 const users = {
   1: {
     uri: require('../assets/icon/Amnesia-anime.png'),
-    name: 'Amnesia',
+    name: 'Heroine',
+    school: 'Amnesia',
+    skill: 'Cooking',
+    learn: 'Psychology',
   },
   2: {
     uri: require('../assets/icon/Avatar-The-Last-Airbender.png'),
-    name: 'Airbender',
+    name: 'Sokka',
+    school: 'the Last Airbender',
+    skill: 'Karate',
+    learn: 'Magic',
   },
   3: {
     uri: require('../assets/icon/Bleach-anime.png'),
-    name: 'Bleach',
+    name: 'Ichigo Kurosaki',
+    school: 'Karakura High School',
+    skill: 'Swordmanship',
+    learn: 'Japanese',
   },
   4: {
     uri: require('../assets/icon/Fairy-Tail.png'),
-    name: 'Fairy Tail',
+    name: 'Natsu Dragneel',
+    school: 'Fairy Tail',
+    skill: 'Fire Magic',
+    learn: 'Water Magic',
   },
   5: {
     uri: require('../assets/icon/Dragonball-Goku.png'),
     name: 'GoKu',
+    school: 'Dragon Ball',
+    skill: 'Kamehameha',
+    learn: 'English',
   },
   6: {
     uri: require('../assets/icon/Fullmetal-Alchemist.png'),
     name: 'Edward',
+    school: 'Fullmetal-Alchemist',
+    skill: 'Alchemy',
+    learn: 'Cooking',
   },
   7: {
     uri: require('../assets/icon/Inuyasha.png'),
     name: 'Inuyasha',
+    school: 'Kagome',
+    skill: 'Swordmanship',
+    learn: 'Archery',
   },
   8: {
     uri: require('../assets/icon/Naruto.png'),
     name: 'Naruto',
+    school: 'Team Kakashi',
+    skill: 'Rasengan',
+    learn: 'Flying Thunder God Slash',
   }
 };
 
@@ -52,7 +76,10 @@ export class HomeScreen extends Component {
   moveToPersonScreen = (id) => {
     this.props.navigation.navigate("Person", {
       uri: users[id].uri,
-      name: users[id].name
+      name: users[id].name,
+      school: users[id].school,
+      skill: users[id].skill,
+      learn: users[id].learn,
     });
   }
   
@@ -190,6 +217,8 @@ export const HomeStack = createBottomTabNavigator({
   Home: {
     screen: HomeScreen,
     navigationOptions: {
+      
+      tabBarLabel: 'Home',
       tabBarIcon: ({ tintColor }) => {
         return <FontAwesomeIcon icon={ faLink } color={ tintColor } size={20}/>;
       },
@@ -198,6 +227,8 @@ export const HomeStack = createBottomTabNavigator({
   Person: {
     screen: PersonScreen,
     navigationOptions: {
+      title: 'Person',
+      tabBarLabel: 'Person',
       tabBarIcon: ({tintColor}) => {
         return <FontAwesomeIcon icon={ faIdBadge } color={ tintColor } size={20}/>;
       }
@@ -206,6 +237,8 @@ export const HomeStack = createBottomTabNavigator({
   Chat: {
     screen: ChatScreen,
     navigationOptions: {
+      title: 'Chat',
+      tabBarLabel: 'Chat',
       tabBarIcon: ({tintColor}) => {
         return <FontAwesomeIcon icon={ faComments } color={ tintColor } size={20}/>;
       }
@@ -214,6 +247,8 @@ export const HomeStack = createBottomTabNavigator({
   Profile: {
     screen: ProfileScreen,
     navigationOptions: {
+      title: 'Profile',
+      tabBarLabel: 'Profile',
       tabBarIcon: ({tintColor}) => {
         return <FontAwesomeIcon icon={ faUser } color={ tintColor } size={20}/>;
       }
