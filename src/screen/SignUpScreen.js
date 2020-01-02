@@ -71,6 +71,7 @@ export default class SignUpScreen extends Component {
             <TextInput style={ {width: 340, height: 40, fontSize: 18} }
               placeholder="Password"
               onChangeText={(password) => this.setState({password})}
+              secureTextEntry={true}
               value={this.state.password}
             />
             <Button 
