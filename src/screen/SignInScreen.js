@@ -10,11 +10,9 @@ import { createStackNavigator } from 'react-navigation-stack';
 import { HomeStack } from "./HomeScreen";
 import SignUpScreen from "./SignUpScreen";
 
-import io from 'socket.io-client';
+import WS from '../socket/ws';
 
-const SERVER_URL = 'http://127.0.0.1:5000';
-
-//export const socket = io(SERVER_URL, { transports: ['websocket'], jsonp: false });
+// import io from 'socket.io-client';
 
 export class SignInScreen extends Component {
   constructor(props) {
@@ -31,13 +29,15 @@ export class SignInScreen extends Component {
   }
 
   componentDidMount() {
-    this.socket = io(SERVER_URL, { reconnection: false, transports: ['websocket'], jsonp: false });
+    
+    this.socket = WS.getSocket();
 
     this.socket.on('connect', () => {
       console.log('connected')
     });
 
     this.socket.on("sign in response", (message) => {this.response(message)});
+  
   }
 
   signIn() {

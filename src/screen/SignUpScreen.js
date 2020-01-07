@@ -2,9 +2,7 @@ import React, { Component } from 'react';
 
 import { StyleSheet, View, Text, TextInput, Button } from 'react-native';
 
-import io from 'socket.io-client';
-
-const SERVER_URL = 'http://127.0.0.1:5000';
+import WS from '../socket/ws';
 
 export default class SignUpScreen extends Component {
   constructor(props) {
@@ -17,13 +15,15 @@ export default class SignUpScreen extends Component {
   }
 
   componentDidMount() {
-    this.socket = io(SERVER_URL, { reconnection: false, transports: ['websocket'], jsonp: false });
+    
+    this.socket = WS.getSocket();
 
     this.socket.on('connect', () => {
       console.log('connected')
     });
 
     this.socket.on("sign up response", (message) => {this.response(message)});
+    
   }
 
   signUp() {
