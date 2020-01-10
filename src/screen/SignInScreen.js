@@ -54,7 +54,7 @@ export class SignInScreen extends Component {
   }
 
   async onUserLogin() {
-    // this.signIn();
+    this.signIn();
     this.props.navigation.navigate("Home");
   }
 
@@ -90,7 +90,7 @@ export class SignInScreen extends Component {
           
           <View style={ styles.message_view }>
             <Text style={ {padding: 10, fontSize: 24} }>
-              { //this.state.user_name.split(' ').map((word) => word && '🍕').join(' ') 
+              { 
                 this.state.message
               }
             </Text>

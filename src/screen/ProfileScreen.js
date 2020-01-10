@@ -1,7 +1,9 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image, Button } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faDollarSign, faStar } from '@fortawesome/free-solid-svg-icons';
+
+import ImagePicker from 'react-native-image-picker';
 
 const users = {
   1: {
@@ -63,6 +65,21 @@ const users = {
 };
 
 export default class ProfileScreen extends Component {
+  state = {
+    photo: null,
+  }
+
+  handleChoosePhoto = () => {
+    const options = {
+      noData: true,
+    }
+    ImagePicker.launchImageLibrary(options, response => {
+      if (response.uri) {
+        this.setState({ photo: response })
+      }
+    })
+  }
+
   moveToPersonScreen = (id) => {
     this.props.navigation.navigate("Person", {
       uri: users[id].uri,
@@ -74,16 +91,28 @@ export default class ProfileScreen extends Component {
   }
 
   render() {
+    let { photo } = this.state;
+    if (photo == null) {
+      photo = {uri: "../assets/icon/Naruto.png"};
+    }
     return (
       <View style={ styles.container }>
         <View>
-          <Image style={ styles.head_portrial } 
-            source={require('../assets/icon/Dragonball-Goku.png')}
-          />
+          {
+            photo && (
+              <Image style={ styles.head_portrial } 
+                //source={require('../assets/icon/Dragonball-Goku.png')}
+                source={{ uri: photo.uri }}
+              />
+            )
+          }
         </View>
         <View>
           <TouchableHighlight>
-            <Text style={{fontSize: 18, color: 'dodgerblue', fontWeight: 'bold'}}>Change Profile Photo</Text>
+            <Text style={{fontSize: 18, color: 'dodgerblue', fontWeight: 'bold'}}
+              onPress={this.handleChoosePhoto}>
+                Change Profile Photo
+            </Text>
           </TouchableHighlight>
         </View>
         <View>

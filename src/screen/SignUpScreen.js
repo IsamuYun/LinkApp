@@ -22,17 +22,17 @@ export default class SignUpScreen extends Component {
       console.log('connected')
     });
 
-    this.socket.on("sign up response", (message) => {this.response(message)});
+    this.socket.on("sign_up_response", (message) => {this.response(message)});
     
   }
 
   signUp() {
     var data = {
       "user_name": this.state.user_name,
-      "phone_number": this.state.phone_number,
+      "phone_num": this.state.phone_number,
       "password": this.state.password
     };
-    this.socket.emit("sign up", JSON.stringify(data));
+    this.socket.emit("sign_up", JSON.stringify(data));
   }
 
   response(message) {
