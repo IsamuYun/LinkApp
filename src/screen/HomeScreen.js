@@ -11,6 +11,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { faComments, faIdBadge, faUser } from '@fortawesome/free-regular-svg-icons';
 
+import { getUserId } from "../store/store";
+import AsyncStorage from "@react-native-community/async-storage";
+// import AsyncStorage from '@react-native-community/async-storage';
+
 const users = {
   1: {
     uri: require('../assets/icon/Amnesia-anime.png'),
@@ -72,7 +76,21 @@ const users = {
 
 
 export class HomeScreen extends Component {
+  constructor(props) {
+    super(props);
+    this.user_id = '';
+  }
+
+  componentDidMount() {
+    this.getUserId();
+  }
+
+  async getUserId() {
+    this.user_id = await AsyncStorage.getItem("user_id");
+  }  
+
   
+
   moveToPersonScreen = (id) => {
     this.props.navigation.navigate("Person", {
       uri: users[id].uri,

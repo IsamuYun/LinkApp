@@ -56,8 +56,8 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>For choose a photo.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>For taking a photo.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>For saving a photo.</string>
+    <string>For taking a photo.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>For saving a photo.</string>
 </dict>
 </plist>

@@ -2,7 +2,10 @@ import React, { Component } from 'react';
 
 import { StyleSheet, View, Text, TextInput, Button } from 'react-native';
 
+import AsyncStorage from '@react-native-community/async-storage';
+
 import WS from '../socket/ws';
+import Store from '../store/store';
 
 export default class SignUpScreen extends Component {
   constructor(props) {
@@ -10,7 +13,9 @@ export default class SignUpScreen extends Component {
     this.state = { 
       user_name: '',
       phone_number: '',
-      password: ''
+      password: '',
+      message: '',
+      user_id: '',
     };
   }
 
@@ -30,15 +35,23 @@ export default class SignUpScreen extends Component {
     var data = {
       "user_name": this.state.user_name,
       "phone_num": this.state.phone_number,
-      "password": this.state.password
+      "password": this.state.password,
     };
     this.socket.emit("sign_up", JSON.stringify(data));
   }
 
   response(message) {
-    let data_str = JSON.stringify(message);
-    console.log(data_str);
-    this.props.navigation.navigate("Home");
+    this.setState({message: message.e_msg});
+    this.setState({user_id: message.user_id});
+    Store.storeUserId(message.user_id);
+
+    const user_id = Store.getUserId();
+    console.log("UserId in static Store: " + user_id);
+
+    if (message.e_code == 0) {
+      this.props.navigation.navigate("Home");
+    }
+    
   }
 
   async onSignUp() {
@@ -78,6 +91,14 @@ export default class SignUpScreen extends Component {
               title="Sign Up"
               onPress={() => this.onSignUp()}
             />
+          </View>
+
+          <View style={ styles.message_view }>
+            <Text style={ {padding: 10, fontSize: 24} }>
+              { 
+                this.state.message
+              }
+            </Text>
           </View>
           
         </View>
@@ -123,5 +144,11 @@ const styles = StyleSheet.create({
     height: 80,
     alignItems: 'center',
     justifyContent: 'center'
-  }
+  },
+
+  message_view: {
+    width: 360,
+    height: 60,
+    color: 'red'
+  },
 });

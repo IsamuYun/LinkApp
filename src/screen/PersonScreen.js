@@ -1,9 +1,41 @@
 import React, { Component } from "react";
 import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image } from 'react-native';
 
+import AsyncStorage from '@react-native-community/async-storage';
+
+import WS from '../socket/ws';
+
 export default class PersonScreen extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      user_name: "",
+      user_id: "",
+    };
+  }
+
+  componentDidMount() {
+    this.socket = WS.getSocket();
+    this.getUserId();
+  }
+
   moveToHomeScreen() {
     this.props.navigation.navigate("Home");
+  }
+
+  getUserId = async () => {
+    try {
+      const user_id = await AsyncStorage.getItem("user_id");
+      
+      this.setState({user_id});
+      console.log("get user id " + this.state.user_id);
+    }
+    catch (e) {
+      console.log(e);
+    }
+  }
+
+  onPay = async () => {
   }
 
   render() {
@@ -24,6 +56,7 @@ export default class PersonScreen extends Component {
         <View style={ styles.button_view }>
           <TouchableHighlight
             style={ styles.submit }
+            onPress={ () => this.onPay() }
           >
             <Text style={ styles.submitText }>Pay</Text>
           </TouchableHighlight>

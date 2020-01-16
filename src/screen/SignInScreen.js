@@ -11,8 +11,9 @@ import { HomeStack } from "./HomeScreen";
 import SignUpScreen from "./SignUpScreen";
 
 import WS from '../socket/ws';
+import Store from "../store/store";
 
-// import io from 'socket.io-client';
+import AsyncStorage from '@react-native-community/async-storage';
 
 export class SignInScreen extends Component {
   constructor(props) {
@@ -24,38 +25,36 @@ export class SignInScreen extends Component {
     };
     
     this.signIn = this.signIn.bind(this);
+    this.response = this.response.bind(this);
 
     
   }
 
   componentDidMount() {
-    
     this.socket = WS.getSocket();
-
-    this.socket.on('connect', () => {
-      console.log('connected')
-    });
-
-    this.socket.on("sign in response", (message) => {this.response(message)});
-  
   }
-
+  
   signIn() {
     var data = {
       "user_name": this.state.user_name, 
       "password": this.state.password
     };
-    this.socket.emit("sign in", JSON.stringify(data));
+    this.socket.emit("sign_in", data.user_name, data.password, this.response);
   }
 
   response(message) {
-    let data_str = JSON.stringify(message);
-    console.log(data_str);
+    const user_id = message.user_id;
+    Store.storeUserId(user_id);
+    if (message.e_code != 0) {
+      this.setState( {message: message.e_msg} );
+    }
+    else {
+      this.props.navigation.navigate("Home");
+    }
   }
 
   async onUserLogin() {
     this.signIn();
-    this.props.navigation.navigate("Home");
   }
 
   onSignUp() {

@@ -4,6 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faDollarSign, faStar } from '@fortawesome/free-solid-svg-icons';
 
 import ImagePicker from 'react-native-image-picker';
+import WS from '../socket/ws';
+
+import AsyncStorage from '@react-native-community/async-storage';
 
 const users = {
   1: {
@@ -65,20 +68,123 @@ const users = {
 };
 
 export default class ProfileScreen extends Component {
-  state = {
-    photo: null,
+  constructor(props) {
+    super(props);
+    this.state = {
+      photo: null,
+      message: "",
+      user_id: "",
+      money: 0,
+      server_file_name: "",
+    }
+
+    this.socket = WS.getSocket();
+    this.base64 = "";
   }
 
-  handleChoosePhoto = () => {
-    const options = {
-      noData: true,
-    }
-    ImagePicker.launchImageLibrary(options, response => {
-      if (response.uri) {
-        this.setState({ photo: response })
-      }
-    })
+  componentDidMount() {
+    
+
+    this.getUserId();
+
+    this.socket.on("read_chunk_response", (message) => {this.response(message)});
+    this.socket.on("transfer_response", (message) => {this.transferResponse(message)} );
+
+    this.readFile("Hyouka.png");
   }
+
+  response(message) {
+    if (message.code == 0) {
+      this.setState({ photo: {uri: message.data} });
+    }
+  }
+
+  transferResponse(message) {
+    if (message.code == 0) {
+      //this.setState({ server_file_name: message.server_file_name });
+      const {photo} = this.state;
+      this.writeFile(message.server_file_name, 0, photo.data);
+    } 
+  }
+
+  getUserId = async () => {
+    try {
+      const user_id = await AsyncStorage.getItem("user_id");
+      
+      this.setState({user_id});
+
+      this.getMoney();
+      
+    }
+    catch (e) {
+      console.log(e);
+    }
+  }
+
+  getMoney = async () => {
+    this.socket.emit("get_money", this.state.user_id, function(money) {
+      this.setState({money});
+    }.bind(this));
+  }
+  
+  handleChoosePhoto = async () => {
+    const options = {
+      noData: false,
+      storageOptions: {
+        skipBackup: true,
+      },
+    }
+
+    ImagePicker.showImagePicker(options, async (response) => {
+      if (response.uri) {
+        this.setState({ photo: response });
+        
+        this.startTransfer(response.fileName, response.fileSize);
+  
+        
+      }
+    });
+  };
+
+  writeFile(filename, offset, data) {
+    
+    this.socket.emit("write_chunk", filename, offset, data, function(result) {
+      if (result) {
+        console.log("file upload success.");
+      }
+      else {
+        console.log("file upload failed.");
+      }
+    });
+  }
+
+  readFile(filename) {
+    this.socket.emit("read_chunk", filename, function(result) {
+      if (result) {
+        console.log("file read success");
+      }
+      else {
+        console.log("file read failed");
+      }
+    });
+  }
+
+  startTransfer(fileName, fileSize) {
+    if (fileName === null || fileSize === 0) {
+      console.log("No file need to upload.");
+      return false;
+    } 
+    this.socket.emit("start_transfer", fileName, fileSize, function(serverFileName) {
+      if (!serverFileName) {
+        return false;
+      }
+      this.server_file_name = serverFileName;
+    }.bind(this));
+  }
+
+  
+
+
 
   moveToPersonScreen = (id) => {
     this.props.navigation.navigate("Person", {
@@ -91,26 +197,22 @@ export default class ProfileScreen extends Component {
   }
 
   render() {
-    let { photo } = this.state;
-    if (photo == null) {
-      photo = {uri: "../assets/icon/Naruto.png"};
+    const { photo } = this.state;
+    let user_head_portraits;
+    if (photo) {
+      user_head_portraits = <Image style={ styles.head_portrial } source={ { uri: photo.uri } } />;
+    }
+    else {
+      user_head_portraits = <Image style={ styles.head_portrial } source={require('../assets/icon/Dragonball-Goku.png')} />;
     }
     return (
       <View style={ styles.container }>
         <View>
-          {
-            photo && (
-              <Image style={ styles.head_portrial } 
-                //source={require('../assets/icon/Dragonball-Goku.png')}
-                source={{ uri: photo.uri }}
-              />
-            )
-          }
+          { user_head_portraits }
         </View>
         <View>
-          <TouchableHighlight>
-            <Text style={{fontSize: 18, color: 'dodgerblue', fontWeight: 'bold'}}
-              onPress={this.handleChoosePhoto}>
+          <TouchableHighlight onPress={ () => {this.handleChoosePhoto()} }>
+            <Text style={{fontSize: 18, color: 'dodgerblue', fontWeight: 'bold'}}>
                 Change Profile Photo
             </Text>
           </TouchableHighlight>
@@ -119,9 +221,8 @@ export default class ProfileScreen extends Component {
           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Goku</Text>
         </View>
         <View style={styles.balance_view}>
-          <FontAwesomeIcon icon={ faDollarSign } style={styles.stars} size={20}/>
           <Text style={{fontSize: 18, justifyContent: 'center', textAlign: 'center', fontWeight: 'bold'}}>Balance:</Text>
-          <Text style={styles.dollar_number}>$999.99</Text>
+            <Text style={styles.dollar_number}>{ this.state.money }</Text>
         </View>
         <View style={ styles.text_view }>
           <Text style={ styles.normal_text }>I'm class of 2020.</Text>
@@ -158,6 +259,14 @@ export default class ProfileScreen extends Component {
             source={users['8'].uri}
           />
           </TouchableHighlight>
+        </View>
+
+        <View style={ styles.message_view }>
+          <Text style={ {padding: 10, fontSize: 24} }>
+            { 
+              this.state.message
+            }
+          </Text>
         </View>
         
       </View>
@@ -244,5 +353,10 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderRadius: 10,
     margin: 1,
+  },
+  message_view: {
+    width: 360,
+    height: 60,
+    color: 'red'
   },
 });
