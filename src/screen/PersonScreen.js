@@ -4,19 +4,30 @@ import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image } from 're
 import AsyncStorage from '@react-native-community/async-storage';
 
 import WS from '../socket/ws';
+import { counter } from "@fortawesome/fontawesome-svg-core";
 
 export default class PersonScreen extends Component {
   constructor(props) {
     super(props);
+    const { navigation } = props;
     this.state = {
       user_name: "",
       user_id: "",
+      other_uid: navigation.getParam("other_uid", ''),
     };
+    this.socket = WS.getSocket();
+    this.getUserId(); 
   }
 
+  
   componentDidMount() {
-    this.socket = WS.getSocket();
-    this.getUserId();
+  }
+
+  getPersonUid = () => {
+    
+    const { navigation } = this.props;
+    console.log("This person's uid: " + navigation.getParam("other_uid", ""));
+    console.log("This person's head_portraits: " + navigation.getParam("other_head_portraits", ""));
   }
 
   moveToHomeScreen() {
@@ -27,24 +38,45 @@ export default class PersonScreen extends Component {
     try {
       const user_id = await AsyncStorage.getItem("user_id");
       
-      this.setState({user_id});
-      console.log("get user id " + this.state.user_id);
+      this.setState({user_id: user_id});
     }
     catch (e) {
       console.log(e);
     }
   }
 
+  getOtherUser = () => {
+    
+      const other_uid = AsyncStorage.getItem("other_uid");
+      this.setState({other_uid});
+      const other_head_portraits = AsyncStorage.getItem("other_head_portraits");
+      this.setState({other_head_portraits});
+  }
+
   onPay = async () => {
+    this.socket.emit("increase_money", this.state.user_id, -5, function(result) {
+      if (result) {
+        console.log("user is pay 5 dollars.");
+        this.getPersonUid();
+        this.socket.emit("increase_money", this.state.other_uid, 5, function(result) {
+          if (result) {
+            console.log("this person get 5 dollars");
+          }
+        });
+      }
+      
+    }.bind(this));
+    
   }
 
   render() {
     const { navigation } = this.props;
+    
     return (
       <View style={ styles.container }>
         <View>
           <Image style={ styles.head_portrial } 
-            source={navigation.getParam('uri', require('../assets/icon/Dragonball-Goku.png'))}
+            source={ {uri: WS.BASE_URL + navigation.getParam("other_head_portraits", '')} }
           />
         </View>
         <View>
@@ -58,7 +90,7 @@ export default class PersonScreen extends Component {
             style={ styles.submit }
             onPress={ () => this.onPay() }
           >
-            <Text style={ styles.submitText }>Pay</Text>
+            <Text style={ styles.submitText }>Pay $5</Text>
           </TouchableHighlight>
           <TouchableHighlight
             style={ styles.submit }

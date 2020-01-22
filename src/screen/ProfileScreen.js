@@ -7,6 +7,7 @@ import ImagePicker from 'react-native-image-picker';
 import WS from '../socket/ws';
 
 import AsyncStorage from '@react-native-community/async-storage';
+import Store from "../store/store";
 
 const users = {
   1: {
@@ -74,8 +75,20 @@ export default class ProfileScreen extends Component {
       photo: null,
       message: "",
       user_id: "",
-      money: 0,
       server_file_name: "",
+      head_portraits: "",
+      user: {
+        money: 0,
+        user_name: "",
+        class_name: "",
+        school: "",
+        skill: "",
+        lesson: "",
+      },
+      class_name: "",
+      school: "",
+      skill: "",
+      lesson: "",
     }
 
     this.socket = WS.getSocket();
@@ -83,14 +96,19 @@ export default class ProfileScreen extends Component {
   }
 
   componentDidMount() {
-    
-
     this.getUserId();
+    
+    setTimeout(() => {
+      this.getUser();
+    }, 1000);
+
+    // this.getMoney();
+    this.getHeadPortraits();
 
     this.socket.on("read_chunk_response", (message) => {this.response(message)});
-    this.socket.on("transfer_response", (message) => {this.transferResponse(message)} );
-
-    this.readFile("Hyouka.png");
+    this.socket.on("transfer_response", (message) => {this.transferResponse(message)});
+    this.socket.on("single_user_res", (message) => {this.userResponse(message)});
+    
   }
 
   response(message) {
@@ -107,17 +125,44 @@ export default class ProfileScreen extends Component {
     } 
   }
 
+  userResponse(message) {
+    if (message.code == 0) {
+      this.setState({user: message.data});
+      console.log("Get single user info:");
+      console.log(this.state.user);
+      if (this.state.user.class_name && this.state.class_name === "") {
+        this.setState({class_name: this.state.user.class_name});
+      }
+      if (this.state.user.school && this.state.school === "") {
+        this.setState({school: this.state.user.school});
+      }
+      if (this.state.user.skill && this.state.skill === "") {
+        this.setState({skill: this.state.user.skill});
+      }
+      if (this.state.user.lesson && this.state.lesson === "") {
+        this.setState({lesson: this.state.user.lesson});
+      }
+    }
+  }
+
   getUserId = async () => {
     try {
       const user_id = await AsyncStorage.getItem("user_id");
       
       this.setState({user_id});
-
-      this.getMoney();
-      
     }
     catch (e) {
-      console.log(e);
+      console.log(e.message);
+    }
+  }
+
+  getHeadPortraits = async () => {
+    try {
+      const head_portraits = await AsyncStorage.getItem("head_portraits");
+      this.setState({head_portraits});
+    }
+    catch (e) {
+      console.log(e.message);
     }
   }
 
@@ -125,6 +170,10 @@ export default class ProfileScreen extends Component {
     this.socket.emit("get_money", this.state.user_id, function(money) {
       this.setState({money});
     }.bind(this));
+  }
+
+  getUser = () => {
+    this.socket.emit("get_single_user", this.state.user_id); 
   }
   
   handleChoosePhoto = async () => {
@@ -147,15 +196,17 @@ export default class ProfileScreen extends Component {
   };
 
   writeFile(filename, offset, data) {
-    
-    this.socket.emit("write_chunk", filename, offset, data, function(result) {
+    const user_id = this.state.user_id;
+    this.socket.emit("write_chunk", filename, offset, data, user_id, function(result) {
       if (result) {
         console.log("file upload success.");
+        this.setState({head_portraits: filename});
+        Store.storeHeadPortraits(filename);
       }
       else {
         console.log("file upload failed.");
       }
-    });
+    }.bind(this));
   }
 
   readFile(filename) {
@@ -182,10 +233,6 @@ export default class ProfileScreen extends Component {
     }.bind(this));
   }
 
-  
-
-
-
   moveToPersonScreen = (id) => {
     this.props.navigation.navigate("Person", {
       uri: users[id].uri,
@@ -196,11 +243,35 @@ export default class ProfileScreen extends Component {
     });
   }
 
+  onUpdateProfile = async () => {
+    console.log("Class name: " + this.state.class_name);
+    console.log("School: " + this.state.school);
+    console.log("Skills: " + this.state.skill);
+    console.log("Lessons: " + this.state.lesson);
+
+    let user_info = {
+      user_id: this.state.user_id,
+      class_name: this.state.class_name,
+      school: this.state.school,
+      skill: this.state.skill,
+      lesson: this.state.lesson
+    };
+
+    this.socket.emit("update_profile", JSON.stringify(user_info), (result) => {
+      if (result) {
+        console.log("Update info successful");
+      }
+      else {
+        console.log("Update info failed.");
+      }
+    });
+  }
+
   render() {
     const { photo } = this.state;
     let user_head_portraits;
-    if (photo) {
-      user_head_portraits = <Image style={ styles.head_portrial } source={ { uri: photo.uri } } />;
+    if (this.state.head_portraits) {
+      user_head_portraits = <Image style={ styles.head_portrial } source={ { uri: WS.BASE_URL + this.state.head_portraits } } />;
     }
     else {
       user_head_portraits = <Image style={ styles.head_portrial } source={require('../assets/icon/Dragonball-Goku.png')} />;
@@ -218,18 +289,45 @@ export default class ProfileScreen extends Component {
           </TouchableHighlight>
         </View>
         <View>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Goku</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{ this.state.user.user_name }</Text>
         </View>
         <View style={styles.balance_view}>
           <Text style={{fontSize: 18, justifyContent: 'center', textAlign: 'center', fontWeight: 'bold'}}>Balance:</Text>
-            <Text style={styles.dollar_number}>{ this.state.money }</Text>
+          <Text style={styles.dollar_number}>{ this.state.user.money }</Text>
         </View>
         <View style={ styles.text_view }>
-          <Text style={ styles.normal_text }>I'm class of 2020.</Text>
-          <Text style={ styles.normal_text }>My school is Dragon Ball.</Text>
-          <Text style={ styles.normal_text }>I can teach Kamehameha.</Text>
-          <Text style={ styles.normal_text }>I want to learn English.</Text>
+          <Text style={ styles.normal_text }>I'm class of </Text>
+          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
+              placeholder="Class"
+              onChangeText={(text) => this.setState({class_name: text})}
+              value={ this.state.class_name }
+          />
+          <Text style={ styles.normal_text }>My school is </Text>
+          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
+              placeholder="School"
+              onChangeText={(text) => this.setState({school: text})}
+              value={ this.state.school }
+          />
+          <Text style={ styles.normal_text }>I can teach</Text>
+          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
+              placeholder="Skill"
+              onChangeText={(text) => this.setState({skill: text})}
+              value={ this.state.skill }
+          />
+          <Text style={ styles.normal_text }>I want to learn</Text>
+          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
+              placeholder="Lesson"
+              onChangeText={(text) => this.setState({lesson: text})}
+              value={ this.state.lesson }
+          />
         </View>
+        <View>
+          <Button 
+              title="Update"
+              onPress={() => this.onUpdateProfile()}
+          />
+        </View>
+
         <View style={ styles.favorite_title }>
           <FontAwesomeIcon icon={ faStar } style={{color: 'dodgerblue'}} size={16}/>
           <Text style={{fontSize: 18, justifyContent: 'center', textAlign: 'center', fontWeight: 'bold'}}>Favorited:</Text>
@@ -303,7 +401,7 @@ const styles = StyleSheet.create({
   text_view: {
     padding: 10,
     width: 360,
-    height: 180,
+    height: 340,
   },
 
   normal_text: {

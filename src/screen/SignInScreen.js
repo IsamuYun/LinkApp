@@ -13,8 +13,6 @@ import SignUpScreen from "./SignUpScreen";
 import WS from '../socket/ws';
 import Store from "../store/store";
 
-import AsyncStorage from '@react-native-community/async-storage';
-
 export class SignInScreen extends Component {
   constructor(props) {
     super(props);
@@ -49,6 +47,7 @@ export class SignInScreen extends Component {
       this.setState( {message: message.e_msg} );
     }
     else {
+      console.log("Sign in successful.");
       this.props.navigation.navigate("Home");
     }
   }

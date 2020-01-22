@@ -11,9 +11,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { faComments, faIdBadge, faUser } from '@fortawesome/free-regular-svg-icons';
 
-import { getUserId } from "../store/store";
 import AsyncStorage from "@react-native-community/async-storage";
-// import AsyncStorage from '@react-native-community/async-storage';
+
+import WS from '../socket/ws';
+import { counter } from "@fortawesome/fontawesome-svg-core";
+
+import Store from "../store/store";
+import { isThisTypeNode } from "typescript";
 
 const users = {
   1: {
@@ -74,30 +78,76 @@ const users = {
   }
 };
 
+const S_URL = "http://172.31.99.189:5000/";
 
 export class HomeScreen extends Component {
   constructor(props) {
     super(props);
-    this.user_id = '';
+    this.state = {
+      user_id: '',
+      user: null,
+      user_list: [],
+      nickname: '',
+    }
+
+    this.socket = WS.getSocket();
+    this.socket.on("user_info_res", (message) => {this.responseUserInfo(message)});
+  }
+
+  
+
+  response(message) {
+    if (message.code == 0) {
+      this.setState({ uri: message.data});
+    }
   }
 
   componentDidMount() {
     this.getUserId();
   }
 
-  async getUserId() {
-    this.user_id = await AsyncStorage.getItem("user_id");
-  }  
+  getUserId = async () => {
+    try {
+      const user_id = await AsyncStorage.getItem("user_id");
+      this.setState({user_id});
+      this.socket.emit("get_user_info", user_id);
+    }
+    catch (e) {
+      console.log(e);
+    }
+  }
 
-  
+  responseUserInfo = (message) => {
+    if (message.code == 0) {
+      this.setState({user: message.data});
+      this.setState({nickname: message.data.nickname});
+      console.log("User Info:");
+      console.log(this.state.user);
 
-  moveToPersonScreen = (id) => {
+      Store.storeHeadPortraits(this.state.user.head_portraits);
+      
+      const user_list = message.user_list;
+      this.setState({user_list: user_list});
+    }
+    else {
+      console.log(message.message);
+    }
+  }
+
+  moveToPersonScreen = (user) => {
+    if (user === null) {
+      return;
+    }
+    console.log(user);
+    
+    Store.storeOtherUserId(user.user_id);
+    Store.storeOtherHeadPortraits(user.head_portraits);
+
+
     this.props.navigation.navigate("Person", {
-      uri: users[id].uri,
-      name: users[id].name,
-      school: users[id].school,
-      skill: users[id].skill,
-      learn: users[id].learn,
+      name: user.nickname,
+      other_uid: user.user_id,
+      other_head_portraits: user.head_portraits,
     });
   }
   
@@ -105,80 +155,73 @@ export class HomeScreen extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Welcome, { this.state.nickname }</Text>
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Here are some people we</Text>
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Linked with you</Text>
-          <View style={styles.header_banner}></View>
+          <View style={ styles.header_banner }></View>
         </View>
         
-        <View style={styles.student_title}>
+        <View style={ styles.student_title }>
           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>People who want to learn...</Text>
-          <View style={styles.blue_banner}></View>
+          <View style={ styles.blue_banner }></View>
         </View>
         
         <View style={styles.icon_banner}>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('1')}>
-            <Image style={styles.head_icon}
-              source={users['1'].uri}
-            />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('2')}>
-          
-          <Image style={styles.head_icon}
-            source={users['2'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('3')}>
-          
-          <Image style={styles.head_icon}
-            source={users['3'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('4')}>
-          
-          <Image style={styles.head_icon}
-            source={users['4'].uri}
-          />
-          </TouchableHighlight>
-          <Button style={styles.head_button}
-            title="More"
-
-          />
+          {
+            this.state.user_list.map((user, index) => {
+              if (index > 14 && index < this.state.user_list.length && index < 19) {
+                return (
+                  <TouchableHighlight onPress={() => this.moveToPersonScreen(user)}>
+                    <Image style={styles.head_icon}
+                      source={ {uri: WS.BASE_URL + user.head_portraits} }
+                    />
+                  </TouchableHighlight>
+                );
+              }
+            })
+          }          
+        </View>
+        
+        <View style={styles.icon_banner}>
+          {
+            this.state.user_list.map((user, index) => {
+              if (index > 10 && index < this.state.user_list.length && index < 15) {
+                return (
+                  <TouchableHighlight onPress={() => this.moveToPersonScreen(user)}>
+                    <Image style={styles.head_icon}
+                      source={ {uri: WS.BASE_URL + user.head_portraits} }
+                    />
+                  </TouchableHighlight>
+                );
+              }
+            })
+          }    
+            
         </View>
 
+
+
+        
         <View style={styles.student_title}>
           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>People who can teach...</Text>
           <View style={styles.blue_banner}></View>
         </View>
 
         <View style={styles.icon_banner}>
-        <TouchableHighlight onPress={() => this.moveToPersonScreen('5')}>
+          {
+            this.state.user_list.map((user, index) => {
+              if (index > 0 && index < this.state.user_list.length && index < 5) {
+                return (
+                  <TouchableHighlight onPress={() => this.moveToPersonScreen(user)}>
+                    <Image style={styles.head_icon}
+                      source={ {uri: WS.BASE_URL + user.head_portraits} }
+                    />
+                  </TouchableHighlight>
+                );
+              }
+            })
+          }
           
-          <Image style={styles.head_icon}
-            source={users['5'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('6')}>
-          
-          <Image style={styles.head_icon}
-            source={users['6'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('7')}>
-          
-          <Image style={styles.head_icon}
-            source={users['7'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('8')}>
-          
-          <Image style={styles.head_icon}
-            source={users['8'].uri}
-          />
-          </TouchableHighlight>
-          <Button style={styles.head_button}
-            title="More"
-
-          />
         </View>
 
       </View>
@@ -215,11 +258,11 @@ const styles = StyleSheet.create({
     width: 390,
   },
   head_icon: {
-    width: 72,
-    height: 72,
+    width: 96,
+    height: 96,
     borderWidth: 1,
     borderColor: 'gray',
-    borderRadius: 10,
+    borderRadius: 100,
     margin: 1,
   },
   head_button: {

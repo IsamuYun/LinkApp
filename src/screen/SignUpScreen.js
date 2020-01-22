@@ -45,7 +45,7 @@ export default class SignUpScreen extends Component {
     this.setState({user_id: message.user_id});
     Store.storeUserId(message.user_id);
 
-    const user_id = Store.getUserId();
+    const user_id = this.state.user_id;
     console.log("UserId in static Store: " + user_id);
 
     if (message.e_code == 0) {
