@@ -6,38 +6,58 @@ import AsyncStorage from '@react-native-community/async-storage';
 import WS from '../socket/ws';
 import { counter } from "@fortawesome/fontawesome-svg-core";
 
+import { NavigationEvents } from "react-navigation";
+
 export default class PersonScreen extends Component {
   constructor(props) {
     super(props);
     const { navigation } = props;
     this.state = {
-      user_name: "",
-      user_id: "",
-      other_uid: navigation.getParam("other_uid", ''),
+      user_name: navigation.getParam("user_name", ""),
+      user_id: navigation.getParam("user_id", ""),
+      head_portraits: "",
+      other_uid: navigation.getParam("other_uid", ""),
+      other_user_name: navigation.getParam("other_user_name", ""),
+      other_head_portraits: navigation.getParam("other_head_portraits", "Yasuo.jpg"),
     };
+    
+    
     this.socket = WS.getSocket();
-    this.getUserId(); 
+    
+    
+  }
+
+  willFocus = (payload) => {
+    // TODO get other user_info.
+    const {navigation} = this.props;
+    this.setState({user_name: navigation.getParam("user_name", "")});
+    this.setState({user_id: navigation.getParam("user_id", "")});
+    this.setState({head_portraits: navigation.getParam("head_portraits", "")});
+    this.setState({other_uid: navigation.getParam("other_uid", "")});
+    this.setState({other_user_name: navigation.getParam("other_user_name", "")});
+    this.setState({other_head_portraits: navigation.getParam("other_head_portraits", "Yasuo.jpg")});
+    console.log(payload);
   }
 
   
   componentDidMount() {
-  }
-
-  getPersonUid = () => {
     
-    const { navigation } = this.props;
-    console.log("This person's uid: " + navigation.getParam("other_uid", ""));
-    console.log("This person's head_portraits: " + navigation.getParam("other_head_portraits", ""));
   }
 
-  moveToHomeScreen() {
-    this.props.navigation.navigate("Home");
+  moveToChatScreen = async () => {
+    this.props.navigation.navigate("Chat", {
+      host_uid: this.state.other_uid,
+      host_name: this.state.other_user_name,
+      host_head_portraits: this.state.other_head_portraits,
+      user_id: this.state.user_id,
+      user_name: this.state.user_name,
+      head_portraits: this.state.head_portraits,
+    });
   }
 
   getUserId = async () => {
     try {
       const user_id = await AsyncStorage.getItem("user_id");
-      
       this.setState({user_id: user_id});
     }
     catch (e) {
@@ -45,15 +65,8 @@ export default class PersonScreen extends Component {
     }
   }
 
-  getOtherUser = () => {
-    
-      const other_uid = AsyncStorage.getItem("other_uid");
-      this.setState({other_uid});
-      const other_head_portraits = AsyncStorage.getItem("other_head_portraits");
-      this.setState({other_head_portraits});
-  }
-
   onPay = async () => {
+    // this.getPersonUid();
     this.socket.emit("increase_money", this.state.user_id, -5, function(result) {
       if (result) {
         console.log("user is pay 5 dollars.");
@@ -74,16 +87,19 @@ export default class PersonScreen extends Component {
     
     return (
       <View style={ styles.container }>
+        <NavigationEvents
+          onWillFocus={(payload) => {this.willFocus(payload)}}
+        />
         <View>
           <Image style={ styles.head_portrial } 
-            source={ {uri: WS.BASE_URL + navigation.getParam("other_head_portraits", '')} }
+            source={ { uri: WS.BASE_URL + this.state.other_head_portraits } }
           />
         </View>
         <View>
 
         </View>
         <View>
-          <Text style={{ fontSize: 18, fontWeight: 'bold'}}>{navigation.getParam('name', 'GoKu')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold'}}>{this.state.other_user_name}</Text>
         </View>
         <View style={ styles.button_view }>
           <TouchableHighlight
@@ -94,6 +110,7 @@ export default class PersonScreen extends Component {
           </TouchableHighlight>
           <TouchableHighlight
             style={ styles.submit }
+            onPress={ () => this.moveToChatScreen() }
           >
             <Text style={ styles.submitText }>Message</Text>
           </TouchableHighlight>

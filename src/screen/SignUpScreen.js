@@ -43,13 +43,19 @@ export default class SignUpScreen extends Component {
   response(message) {
     this.setState({message: message.e_msg});
     this.setState({user_id: message.user_id});
+    
     Store.storeUserId(message.user_id);
+    Store.storeUserName(message.user_name);
+    Store.storeHeadPortraits(message.head_portraits);
 
-    const user_id = this.state.user_id;
-    console.log("UserId in static Store: " + user_id);
+    
 
     if (message.e_code == 0) {
-      this.props.navigation.navigate("Home");
+      this.props.navigation.navigate("Home", {
+        user_id: user_id,
+        user_name: message.user_name,
+        head_portraits: message.head_portraits,
+      });
     }
     
   }

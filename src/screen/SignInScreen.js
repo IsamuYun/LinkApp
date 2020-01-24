@@ -43,12 +43,18 @@ export class SignInScreen extends Component {
   response(message) {
     const user_id = message.user_id;
     Store.storeUserId(user_id);
+    Store.storeUserName(message.user_name);
+    Store.storeHeadPortraits(message.head_portraits)
     if (message.e_code != 0) {
       this.setState( {message: message.e_msg} );
     }
     else {
       console.log("Sign in successful.");
-      this.props.navigation.navigate("Home");
+      this.props.navigation.navigate("Home", {
+        user_id: user_id,
+        user_name: message.user_name,
+        head_portraits: message.head_portraits,
+      });
     }
   }
 

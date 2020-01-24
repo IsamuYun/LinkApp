@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Text, TextInput, Button, TouchableHighlight, Image } from 'react-native';
+import { StyleSheet, View, Text, TouchableHighlight, Image } from 'react-native';
 
 import { createBottomTabNavigator } from 'react-navigation-tabs';
 
@@ -17,83 +17,36 @@ import WS from '../socket/ws';
 import { counter } from "@fortawesome/fontawesome-svg-core";
 
 import Store from "../store/store";
-import { isThisTypeNode } from "typescript";
+import { isThisTypeNode, resolveModuleName } from "typescript";
 
-const users = {
-  1: {
-    uri: require('../assets/icon/Amnesia-anime.png'),
-    name: 'Heroine',
-    school: 'Amnesia',
-    skill: 'Cooking',
-    learn: 'Psychology',
-  },
-  2: {
-    uri: require('../assets/icon/Avatar-The-Last-Airbender.png'),
-    name: 'Sokka',
-    school: 'the Last Airbender',
-    skill: 'Karate',
-    learn: 'Magic',
-  },
-  3: {
-    uri: require('../assets/icon/Bleach-anime.png'),
-    name: 'Ichigo Kurosaki',
-    school: 'Karakura High School',
-    skill: 'Swordmanship',
-    learn: 'Japanese',
-  },
-  4: {
-    uri: require('../assets/icon/Fairy-Tail.png'),
-    name: 'Natsu Dragneel',
-    school: 'Fairy Tail',
-    skill: 'Fire Magic',
-    learn: 'Water Magic',
-  },
-  5: {
-    uri: require('../assets/icon/Dragonball-Goku.png'),
-    name: 'GoKu',
-    school: 'Dragon Ball',
-    skill: 'Kamehameha',
-    learn: 'English',
-  },
-  6: {
-    uri: require('../assets/icon/Fullmetal-Alchemist.png'),
-    name: 'Edward',
-    school: 'Fullmetal-Alchemist',
-    skill: 'Alchemy',
-    learn: 'Cooking',
-  },
-  7: {
-    uri: require('../assets/icon/Inuyasha.png'),
-    name: 'Inuyasha',
-    school: 'Kagome',
-    skill: 'Swordmanship',
-    learn: 'Archery',
-  },
-  8: {
-    uri: require('../assets/icon/Naruto.png'),
-    name: 'Naruto',
-    school: 'Team Kakashi',
-    skill: 'Rasengan',
-    learn: 'Flying Thunder God Slash',
-  }
-};
-
-const S_URL = "http://172.31.99.189:5000/";
+import { NavigationEvents } from "react-navigation";
 
 export class HomeScreen extends Component {
   constructor(props) {
     super(props);
+    const {navigation} = props;
     this.state = {
-      user_id: '',
+      user_id: navigation.getParam("user_id", ''),
       user: null,
       user_list: [],
-      nickname: '',
+      user_name: navigation.getParam("user_name", ""),
+      head_portraits: navigation.getParam("head_portraits", ""),
     }
 
     this.socket = WS.getSocket();
     this.socket.on("user_info_res", (message) => {this.responseUserInfo(message)});
-  }
 
+    
+    this.getUserInfo();
+  }
+  
+  willFocus = (payload) => {
+    console.log("home will focus", payload);
+    
+    console.log("Focus name: " + this.state.user_name);
+    console.log("Focus uid: " + this.state.user_id);
+    console.log("Focus head_portrait: " + this.state.head_portraits);
+  } 
   
 
   response(message) {
@@ -103,28 +56,18 @@ export class HomeScreen extends Component {
   }
 
   componentDidMount() {
-    this.getUserId();
   }
 
-  getUserId = async () => {
-    try {
-      const user_id = await AsyncStorage.getItem("user_id");
-      this.setState({user_id});
-      this.socket.emit("get_user_info", user_id);
-    }
-    catch (e) {
-      console.log(e);
-    }
+  getUserInfo = () => {
+    this.socket.emit("get_user_info", this.state.user_id);
   }
 
   responseUserInfo = (message) => {
     if (message.code == 0) {
       this.setState({user: message.data});
-      this.setState({nickname: message.data.nickname});
       console.log("User Info:");
       console.log(this.state.user);
-
-      Store.storeHeadPortraits(this.state.user.head_portraits);
+      // this.setState({user_name: message.data.user_name});
       
       const user_list = message.user_list;
       this.setState({user_list: user_list});
@@ -138,24 +81,28 @@ export class HomeScreen extends Component {
     if (user === null) {
       return;
     }
-    console.log(user);
     
     Store.storeOtherUserId(user.user_id);
     Store.storeOtherHeadPortraits(user.head_portraits);
 
-
     this.props.navigation.navigate("Person", {
-      name: user.nickname,
+      other_user_name: user.user_name,
       other_uid: user.user_id,
       other_head_portraits: user.head_portraits,
+      user_id: this.state.user_id,
+      user_name: this.state.user_name,
+      head_portraits: this.state.head_portraits,
     });
   }
   
   render() {
     return (
       <View style={styles.container}>
+        <NavigationEvents
+          onWillFocus={(payload) => {this.willFocus(payload)}}
+        />
         <View style={styles.header}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Welcome, { this.state.nickname }</Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Welcome, { this.state.user_name }</Text>
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Here are some people we</Text>
           <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Linked with you</Text>
           <View style={ styles.header_banner }></View>
