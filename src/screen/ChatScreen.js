@@ -14,7 +14,9 @@ import AsyncStorage from "@react-native-community/async-storage";
 
 import { NavigationEvents } from "react-navigation";
 
-export default class ChatScreen extends Component {
+import { withNavigationFocus } from 'react-navigation';
+
+export class ChatScreen extends Component {
   constructor(props) {
     super(props);
     const { navigation } = props;
@@ -31,16 +33,19 @@ export default class ChatScreen extends Component {
         _id: '',
         name: 'Kakashi',
         avatar: WS.BASE_URL + "kakashi.png",
-      }
+      },
     };
     this.state.sender._id = this.state.user_id;
     this.state.sender.name = this.state.user_name;
     this.state.sender.avatar = WS.BASE_URL + this.state.head_portraits;
+    
     this.socket = WS.getSocket();
     this.socket.on("single_user_res", (message) => {this.userResponse(message)});
+
+    
   }
 
-  messageList = (result) => {
+  messageList = async (result) => {
     msg_list = [];
     result.map((message, index) => {
       let msg = {
@@ -70,35 +75,29 @@ export default class ChatScreen extends Component {
       
       msg_list.push(msg);
     });
-    this.setState({messages: msg_list});
+    msg_list_reverse = msg_list.reverse();
+    this.setState({messages: msg_list_reverse});
     console.log(this.state.messages);
   }
 
-  willFocus = (payload) => {
-
-  }
-
-  getMessages = async () => {
+  getMessages = () => {
+    /*
     if (this.state.host_uid === '') {
-      this.setState({host_uid: this.state.user_id});
-      this.setState({host_name: this.state.user_name});
-      this.setState({host_head_portraits: this.state.head_portraits});
+      this.state.host_uid = this.state.user_id;
+      this.state.host_name = this.state.host_name;
+      this.state.host_head_portraits = this.state.head_portraits;
     }
+    */
     this.socket.emit("get_message", this.state.host_uid, (result) => {this.messageList(result)});
   }
 
   getUserId = async () => {
-    try {
-      if (this.state.host_uid === '') {
-        this.setState({host_uid: this.state.user_id});
-        this.setState({host_name: this.state.user_name});
-        this.setState({host_head_portraits: this.state.head_portraits});
-      }
-      this.socket.emit("get_message", this.state.host_uid, (result) => {this.messageList(result)});
+    if (this.state.host_uid === '') {
+      this.state.host_uid = this.state.user_id;
+      this.state.host_name = this.state.host_name;
+      this.state.host_head_portraits = this.state.head_portraits;
     }
-    catch (e) {
-      console.log(e.message);
-    }
+    this.socket.emit("get_message", this.state.host_uid, (result) => {this.messageList(result)});
   }
 
   userResponse = (message) => {
@@ -109,11 +108,9 @@ export default class ChatScreen extends Component {
         name: user_info.user_name,
         avatar: WS.BASE_URL + user_info.head_portraits
       }
-      const list = this.state.messages;
+      let list = this.state.messages;
       
       for (let i = 0; i < list.length; i++) {
-        
-
         if (list[i].user._id == sender._id) {
           list[i].user._id = sender._id;
           list[i].user.name = sender.name;
@@ -127,31 +124,54 @@ export default class ChatScreen extends Component {
 
   setHost = () => {
     const {navigation} = this.props;
-    this.setState({host_uid: navigation.getParam("host_uid", "")});
-    this.setState({host_name: navigation.getParam("host_name", "")});
-    this.setState({host_head_portraits: navigation.getParam("host_head_portraits", "")});
-    this.setState({user_id: navigation.getParam("user_id", "")});
-    this.setState({user_name: navigation.getParam("user_name", "")});
-    this.setState({head_portraits: navigation.getParam("head_portraits", "")});
-  }
-
-  componentDidMount() {
-    this.setHost();
-    this.getUserId();
-
-    setTimeout(() => {
-      this.setHost();
-      this.getUserId();
-    }, 3000);
-  }
-  
-  onSend(messages = []) {
-    //console.log("Host uid: " + this.state.host_uid);
+    
+    this.state.host_uid = navigation.getParam("host_uid", "");
+    this.state.host_name = navigation.getParam("host_name", "");
+    this.state.host_head_portraits = navigation.getParam("host_head_portraits", "");
     if (this.state.host_uid === '') {
       this.setState({host_uid: this.state.user_id});
       this.setState({host_name: this.state.user_name});
       this.setState({host_head_portraits: this.state.head_portraits});
     }
+    this.state.user_id = navigation.getParam("user_id", "");
+    this.state.user_name = navigation.getParam("user_name", "");
+    this.state.head_portraits = navigation.getParam("head_portraits", "");
+    //this.setState({host_uid: navigation.getParam("host_uid", "")});
+    //this.setState({host_name: navigation.getParam("host_name", "")});
+    //this.setState({host_head_portraits: navigation.getParam("host_head_portraits", "")});
+    //this.setState({user_id: navigation.getParam("user_id", "")});
+    //this.setState({user_name: navigation.getParam("user_name", "")});
+    //this.setState({head_portraits: navigation.getParam("head_portraits", "")});
+  }
+
+  componentDidMount() {
+    const { navigation } = this.props;
+    this.focusListener = navigation.addListener('didFocus', () => {
+      // The screen is focused
+      // Call any action
+      console.log("Chat Screen is focused.");
+      this.setHost();
+      this.getUserId();
+      
+    });
+  }
+
+  componentWillUnmount() {
+    // Remove the event listener
+    this.focusListener.remove();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.isFocused !== this.props.isFocused) {
+      // Use the `this.props.isFocused` boolean
+      // Call any action
+      console.log("Chat state changed");
+    }
+  }
+  
+  async onSend(messages = []) {
+    //console.log("Host uid: " + this.state.host_uid);
+    
     //console.log("Chat other uid:" + this.state.other_uid);
     //console.log("Chat user id: " + this.state.user_id);
     //console.log(messages);
@@ -162,7 +182,8 @@ export default class ChatScreen extends Component {
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages),
     }))
-    
+    // this.setHost();
+    this.getUserId();
     
     
   }
@@ -187,6 +208,7 @@ export default class ChatScreen extends Component {
   }
 
   render() {
+    // setTimeout(() => {this.getUserId()}, 30000)
     return (
       <GiftedChat
         messages={this.state.messages}
@@ -198,3 +220,7 @@ export default class ChatScreen extends Component {
     )
   }
 }
+
+// withNavigationFocus returns a component that wraps TabScreen and passes
+// in the navigation prop
+export default withNavigationFocus(ChatScreen);

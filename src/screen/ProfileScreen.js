@@ -9,6 +9,8 @@ import WS from '../socket/ws';
 import AsyncStorage from '@react-native-community/async-storage';
 import Store from "../store/store";
 
+import { NavigationEvents } from "react-navigation";
+
 const users = {
   1: {
     uri: require('../assets/icon/Amnesia-anime.png'),
@@ -71,12 +73,13 @@ const users = {
 export default class ProfileScreen extends Component {
   constructor(props) {
     super(props);
+    const {navigation} = props;
     this.state = {
       photo: null,
       message: "",
       user_id: "",
       server_file_name: "",
-      head_portraits: "",
+      head_portraits: navigation.getParam("head_portraits", "Yasuo.jpg"),
       user: {
         money: 0,
         user_name: "",
@@ -119,7 +122,6 @@ export default class ProfileScreen extends Component {
 
   transferResponse(message) {
     if (message.code == 0) {
-      //this.setState({ server_file_name: message.server_file_name });
       const {photo} = this.state;
       this.writeFile(message.server_file_name, 0, photo.data);
     } 
@@ -189,8 +191,6 @@ export default class ProfileScreen extends Component {
         this.setState({ photo: response });
         
         this.startTransfer(response.fileName, response.fileSize);
-  
-        
       }
     });
   };

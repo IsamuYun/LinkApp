@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from 'react-navigation-tabs';
 
 import ProfileScreen from './ProfileScreen';
 import PersonScreen from './PersonScreen';
-import ChatScreen from './ChatScreen';
+import { ChatScreen } from './ChatScreen';
 
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';

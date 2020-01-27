@@ -19,32 +19,57 @@ export default class PersonScreen extends Component {
       other_uid: navigation.getParam("other_uid", ""),
       other_user_name: navigation.getParam("other_user_name", ""),
       other_head_portraits: navigation.getParam("other_head_portraits", "Yasuo.jpg"),
+      other_user_info: {
+        money: 0,
+        school: '',
+        class_name: '',
+        skill: '',
+        learn: '',
+      },
     };
     
-    
     this.socket = WS.getSocket();
-    
-    
+    this.socket.on("single_user_res", (message) => {this.otherUserInfo(message)});
   }
 
   willFocus = (payload) => {
     // TODO get other user_info.
     const {navigation} = this.props;
-    this.setState({user_name: navigation.getParam("user_name", "")});
-    this.setState({user_id: navigation.getParam("user_id", "")});
-    this.setState({head_portraits: navigation.getParam("head_portraits", "")});
-    this.setState({other_uid: navigation.getParam("other_uid", "")});
-    this.setState({other_user_name: navigation.getParam("other_user_name", "")});
-    this.setState({other_head_portraits: navigation.getParam("other_head_portraits", "Yasuo.jpg")});
-    console.log(payload);
+    
+    this.state.user_name = navigation.getParam("user_name", "");
+    this.state.user_id = navigation.getParam("user_id", "");
+    this.state.head_portraits = navigation.getParam("head_portraits", "");
+    this.state.other_uid = navigation.getParam("other_uid", "");
+    this.state.other_user_name = navigation.getParam("other_user_name", "");
+    this.state.other_head_portraits = navigation.getParam("other_head_portraits", "Yasuo.jpg");
+    this.getUser();
+
   }
 
+  updateOtherUid = () => {
+    const { navigation } = this.props;
+    this.setState({other_uid: navigation.getParam("other_uid", "")});
+  }
+
+  getUser = async () => {
+    // this.updateOtherUid();
+    this.socket.emit("get_single_user", this.state.other_uid); 
+  }
+
+  otherUserInfo = (message) => {
+    console.log("Get other user info: ", message);
+    if (message.code == 0) {
+      this.setState({other_user_info: message.data});
+    }
+  }
   
   componentDidMount() {
-    
+    setTimeout(() => {
+      this.getUser();
+    }, 1000);
   }
 
-  moveToChatScreen = async () => {
+  moveToChatScreen = () => {
     this.props.navigation.navigate("Chat", {
       host_uid: this.state.other_uid,
       host_name: this.state.other_user_name,
@@ -66,16 +91,15 @@ export default class PersonScreen extends Component {
   }
 
   onPay = async () => {
-    // this.getPersonUid();
     this.socket.emit("increase_money", this.state.user_id, -5, function(result) {
       if (result) {
         console.log("user is pay 5 dollars.");
-        this.getPersonUid();
         this.socket.emit("increase_money", this.state.other_uid, 5, function(result) {
           if (result) {
             console.log("this person get 5 dollars");
+            this.setState({other_user_info: {money: result}});
           }
-        });
+        }.bind(this));
       }
       
     }.bind(this));
@@ -116,10 +140,10 @@ export default class PersonScreen extends Component {
           </TouchableHighlight>
         </View>
         <View style={ styles.text_view }>
-          <Text style={ styles.normal_text }>I'm class of 2020.</Text>
-          <Text style={ styles.normal_text }>My school is {navigation.getParam('school', 'Dragon Ball')}.</Text>
-          <Text style={ styles.normal_text }>I can teach {navigation.getParam('skill', 'Kamehameha')}.</Text>
-          <Text style={ styles.normal_text }>I want to learn {navigation.getParam('learn', 'English')}.</Text>
+          <Text style={ styles.normal_text }>Money: {this.state.other_user_info.money}</Text>
+          <Text style={ styles.normal_text }>My school is {this.state.other_user_info.school}.</Text>
+          <Text style={ styles.normal_text }>I can teach {this.state.other_user_info.skill}.</Text>
+          <Text style={ styles.normal_text }>I want to learn {this.state.other_user_info.learn}.</Text>
           <Text style={ styles.normal_text }>Leave a view:</Text>
           <TextInput style={ styles.review_text }
               placeholder="Leave a view"
