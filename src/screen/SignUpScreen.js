@@ -52,7 +52,7 @@ export default class SignUpScreen extends Component {
 
     if (message.e_code == 0) {
       this.props.navigation.navigate("Home", {
-        user_id: user_id,
+        user_id: message.user_id,
         user_name: message.user_name,
         head_portraits: message.head_portraits,
       });

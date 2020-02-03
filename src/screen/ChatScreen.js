@@ -61,6 +61,9 @@ export class ChatScreen extends Component {
       msg._id = index;
       msg.text = message.message;
       msg.user._id = message.user_id;
+      msg.user.name = message.user_name;
+      msg.user.avatar = WS.BASE_URL + message.user_head_portraits;
+      /*
       if (msg.user._id == this.state.host_uid) {
         msg.user.name = this.state.host_name;
         msg.user.avatar = WS.BASE_URL + this.state.host_head_portraits;
@@ -72,7 +75,7 @@ export class ChatScreen extends Component {
       else {
         this.socket.emit("get_single_user", message.user_id);
       }
-      
+      */
       msg_list.push(msg);
     });
     msg_list_reverse = msg_list.reverse();
@@ -136,12 +139,6 @@ export class ChatScreen extends Component {
     this.state.user_id = navigation.getParam("user_id", "");
     this.state.user_name = navigation.getParam("user_name", "");
     this.state.head_portraits = navigation.getParam("head_portraits", "");
-    //this.setState({host_uid: navigation.getParam("host_uid", "")});
-    //this.setState({host_name: navigation.getParam("host_name", "")});
-    //this.setState({host_head_portraits: navigation.getParam("host_head_portraits", "")});
-    //this.setState({user_id: navigation.getParam("user_id", "")});
-    //this.setState({user_name: navigation.getParam("user_name", "")});
-    //this.setState({head_portraits: navigation.getParam("head_portraits", "")});
   }
 
   componentDidMount() {

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image, Button } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image, Button, Switch } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faDollarSign, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 
 import ImagePicker from 'react-native-image-picker';
 import WS from '../socket/ws';
@@ -10,65 +10,6 @@ import AsyncStorage from '@react-native-community/async-storage';
 import Store from "../store/store";
 
 import { NavigationEvents } from "react-navigation";
-
-const users = {
-  1: {
-    uri: require('../assets/icon/Amnesia-anime.png'),
-    name: 'Heroine',
-    school: 'Amnesia',
-    skill: 'Cooking',
-    learn: 'Psychology',
-  },
-  2: {
-    uri: require('../assets/icon/Avatar-The-Last-Airbender.png'),
-    name: 'Sokka',
-    school: 'the Last Airbender',
-    skill: 'Karate',
-    learn: 'Magic',
-  },
-  3: {
-    uri: require('../assets/icon/Bleach-anime.png'),
-    name: 'Ichigo Kurosaki',
-    school: 'Karakura High School',
-    skill: 'Swordmanship',
-    learn: 'Japanese',
-  },
-  4: {
-    uri: require('../assets/icon/Fairy-Tail.png'),
-    name: 'Natsu Dragneel',
-    school: 'Fairy Tail',
-    skill: 'Fire Magic',
-    learn: 'Water Magic',
-  },
-  5: {
-    uri: require('../assets/icon/Dragonball-Goku.png'),
-    name: 'GoKu',
-    school: 'Dragon Ball',
-    skill: 'Kamehameha',
-    learn: 'English',
-  },
-  6: {
-    uri: require('../assets/icon/Fullmetal-Alchemist.png'),
-    name: 'Edward',
-    school: 'Fullmetal-Alchemist',
-    skill: 'Alchemy',
-    learn: 'Cooking',
-  },
-  7: {
-    uri: require('../assets/icon/Inuyasha.png'),
-    name: 'Inuyasha',
-    school: 'Kagome',
-    skill: 'Swordmanship',
-    learn: 'Archery',
-  },
-  8: {
-    uri: require('../assets/icon/Naruto.png'),
-    name: 'Naruto',
-    school: 'Team Kakashi',
-    skill: 'Rasengan',
-    learn: 'Flying Thunder God Slash',
-  }
-};
 
 export default class ProfileScreen extends Component {
   constructor(props) {
@@ -87,10 +28,24 @@ export default class ProfileScreen extends Component {
         school: "",
         skill: "",
         lesson: "",
+        teach: {
+          Arts: 0,
+          Computer: 0,
+          Language: 0,
+          Literature: 0,
+          Mathematics: 0
+        },
+        learn: {
+          Arts: 0,
+          Computer: 0,
+          Language: 0,
+          Literature: 0,
+          Mathematics: 0
+        },
       },
       class_name: "",
       school: "",
-      skill: "",
+      skill: 0,
       lesson: "",
     }
 
@@ -243,21 +198,18 @@ export default class ProfileScreen extends Component {
     });
   }
 
-  onUpdateProfile = async () => {
+  onUpdateProfile = () => {
     console.log("Class name: " + this.state.class_name);
     console.log("School: " + this.state.school);
     console.log("Skills: " + this.state.skill);
     console.log("Lessons: " + this.state.lesson);
 
-    let user_info = {
-      user_id: this.state.user_id,
-      class_name: this.state.class_name,
-      school: this.state.school,
-      skill: this.state.skill,
-      lesson: this.state.lesson
-    };
+    const {user} = this.state;
 
-    this.socket.emit("update_profile", JSON.stringify(user_info), (result) => {
+    user.class_name = this.state.class_name;
+    user.school = this.state.school;
+    
+    this.socket.emit("update_profile", JSON.stringify(user), (result) => {
       if (result) {
         console.log("Update info successful");
       }
@@ -265,6 +217,29 @@ export default class ProfileScreen extends Component {
         console.log("Update info failed.");
       }
     });
+  }
+
+  updateState = (value, key1, key2) => {
+    const { user } = this.state;
+    if (value) {
+      user[key1][key2] = 1;
+    }
+    else {
+      user[key1][key2] = 0;
+    }
+    this.setState({user});
+
+    this.onUpdateProfile();
+  }
+
+  updateClassName = (value) => {
+    this.setState({class_name: value});
+    this.onUpdateProfile();
+  }
+
+  updateSchool = (value) => {
+    this.setState({school: value});
+    this.onUpdateProfile();
   }
 
   render() {
@@ -295,37 +270,131 @@ export default class ProfileScreen extends Component {
           <Text style={{fontSize: 18, justifyContent: 'center', textAlign: 'center', fontWeight: 'bold'}}>Balance:</Text>
           <Text style={styles.dollar_number}>{ this.state.user.money }</Text>
         </View>
-        <View style={ styles.text_view }>
+
+        <View style={ styles.status_view }>
           <Text style={ styles.normal_text }>I'm class of </Text>
-          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
+          <TextInput style={ {width: 120, height: 24, fontSize: 18} }
               placeholder="Class"
-              onChangeText={(text) => this.setState({class_name: text})}
+              onChangeText={(text) => this.updateClassName(text)}
               value={ this.state.class_name }
           />
+        </View>
+        
+        <View style={ styles.status_view }>
           <Text style={ styles.normal_text }>My school is </Text>
-          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
+          <TextInput style={ {width: 120, height: 24, fontSize: 18} }
               placeholder="School"
-              onChangeText={(text) => this.setState({school: text})}
+              onChangeText={(text) => this.updateSchool(text)}
               value={ this.state.school }
           />
-          <Text style={ styles.normal_text }>I can teach</Text>
-          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
-              placeholder="Skill"
-              onChangeText={(text) => this.setState({skill: text})}
-              value={ this.state.skill }
-          />
-          <Text style={ styles.normal_text }>I want to learn</Text>
-          <TextInput style={ {width: 340, height: 32, fontSize: 18} }
-              placeholder="Lesson"
-              onChangeText={(text) => this.setState({lesson: text})}
-              value={ this.state.lesson }
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.normal_text }>I can teach:</Text>
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Arts & Crafts</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "teach", "Arts")} }
+              value={ this.state.user.teach.Arts ? true : false }
+              style={ styles.item }
           />
         </View>
-        <View>
-          <Button 
-              title="Update"
-              onPress={() => this.onUpdateProfile()}
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Computers</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "teach", "Computer")} }
+              value={ this.state.user.teach.Computer ? true : false }
+              style={ styles.item }
           />
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Language</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "teach", "Language")} }
+              value={ this.state.user.teach.Language ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Literature</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "teach", "Literature")} }
+              value={ this.state.user.teach.Literature ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Mathematics</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "teach", "Mathematics")} }
+              value={ this.state.user.teach.Mathematics ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.normal_text }>I want to learn:</Text>
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Arts & Crafts</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "learn", "Arts")} }
+              value={ this.state.user.learn.Arts ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Computers</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "learn", "Computer")} }
+              value={ this.state.user.learn.Computer ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Language</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "learn", "Language")} }
+              value={ this.state.user.learn.Language ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Literature</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "learn", "Literature")} }
+              value={ this.state.user.learn.Literature ? true : false }
+              style={ styles.item }
+          />
+        </View>
+
+
+
+        <View style={ styles.status_view }>
+          <Text style={ styles.title }>Mathematics</Text>
+          <Switch
+              onValueChange={ (value) => {this.updateState(value, "learn", "Mathematics")} }
+              value={ this.state.user.learn.Mathematics ? true : false }
+              style={ styles.item }
+          />
+        </View>
+        
+        <View>
+          
         </View>
 
         <View style={ styles.favorite_title }>
@@ -334,29 +403,7 @@ export default class ProfileScreen extends Component {
         </View>
 
         <View style={styles.icon_banner}>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('1')}>
-            <Image style={styles.head_icon}
-              source={users['1'].uri}
-            />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('6')}>
           
-          <Image style={styles.head_icon}
-            source={users['6'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('7')}>
-          
-          <Image style={styles.head_icon}
-            source={users['7'].uri}
-          />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => this.moveToPersonScreen('8')}>
-          
-          <Image style={styles.head_icon}
-            source={users['8'].uri}
-          />
-          </TouchableHighlight>
         </View>
 
         <View style={ styles.message_view }>
@@ -405,8 +452,19 @@ const styles = StyleSheet.create({
   },
 
   normal_text: {
+    width: 180,
     fontSize: 18,
-    marginTop: 24,
+  },
+
+  title: {
+    width: 300,
+    fontSize: 18,
+    alignSelf: "flex-start",
+  },
+
+  item: {
+    width: 60,
+    alignSelf: "flex-end",
   },
 
   balance_view: {
@@ -416,6 +474,14 @@ const styles = StyleSheet.create({
     //textAlign: 'center',
     justifyContent: 'center',
     flexDirection: "row",
+  },
+
+  status_view: {
+    width: 360,
+    height: 32,
+    // justifyContent: 'flex-start',
+    flexDirection: 'row',
+    // textAlign: 'center',
   },
 
   stars: {

@@ -25,19 +25,22 @@ export class HomeScreen extends Component {
   constructor(props) {
     super(props);
     const {navigation} = props;
+
     this.state = {
       user_id: navigation.getParam("user_id", ''),
-      user: null,
-      user_list: [],
+      user: {},
       user_name: navigation.getParam("user_name", ""),
       head_portraits: navigation.getParam("head_portraits", ""),
+      teacher_list: [],
+      student_list: [],
     }
 
     this.socket = WS.getSocket();
     this.socket.on("user_info_res", (message) => {this.responseUserInfo(message)});
-
+    this.socket.on("teacher_list_res", (list) => {this.responseTeacherList(list)});
+    this.socket.on("student_list_res", (list) => {this.responseStudentList(list)});
     
-    this.getUserInfo();
+    
   }
   
   willFocus = (payload) => {
@@ -46,6 +49,7 @@ export class HomeScreen extends Component {
     console.log("Focus name: " + this.state.user_name);
     console.log("Focus uid: " + this.state.user_id);
     console.log("Focus head_portrait: " + this.state.head_portraits);
+    this.getUserInfo();
   } 
   
 
@@ -67,13 +71,25 @@ export class HomeScreen extends Component {
       this.setState({user: message.data});
       console.log("User Info:");
       console.log(this.state.user);
-      // this.setState({user_name: message.data.user_name});
-      
-      const user_list = message.user_list;
-      this.setState({user_list: user_list});
     }
     else {
       console.log(message.message);
+    }
+  }
+
+  responseTeacherList = (list) => {
+    if (list.code == 0) {
+      const teacher_list = list.user_list;
+      console.log("Teacher List:");
+      this.setState({teacher_list: teacher_list});
+    }
+  }
+
+  responseStudentList = (list) => {
+    if (list.code == 0) {
+      const student_list = list.user_list;
+      console.log("Student List:");
+      this.setState({student_list: student_list});
     }
   }
 
@@ -109,14 +125,14 @@ export class HomeScreen extends Component {
         </View>
         
         <View style={ styles.student_title }>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>People who want to learn...</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>People who can teach...</Text>
           <View style={ styles.blue_banner }></View>
         </View>
         
         <View style={styles.icon_banner}>
           {
-            this.state.user_list.map((user, index) => {
-              if (index > 14 && index < this.state.user_list.length && index < 19) {
+            this.state.teacher_list.map((user, index) => {
+              if (index >= 0 && index < this.state.teacher_list.length && index < 4) {
                 return (
                   <TouchableHighlight onPress={() => this.moveToPersonScreen(user)}>
                     <Image style={styles.head_icon}
@@ -131,8 +147,8 @@ export class HomeScreen extends Component {
         
         <View style={styles.icon_banner}>
           {
-            this.state.user_list.map((user, index) => {
-              if (index > 10 && index < this.state.user_list.length && index < 15) {
+            this.state.teacher_list.map((user, index) => {
+              if (index >= 4 && index < this.state.teacher_list.length && index < 8) {
                 return (
                   <TouchableHighlight onPress={() => this.moveToPersonScreen(user)}>
                     <Image style={styles.head_icon}
@@ -150,14 +166,14 @@ export class HomeScreen extends Component {
 
         
         <View style={styles.student_title}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>People who can teach...</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>People who want to learn...</Text>
           <View style={styles.blue_banner}></View>
         </View>
 
         <View style={styles.icon_banner}>
           {
-            this.state.user_list.map((user, index) => {
-              if (index > 0 && index < this.state.user_list.length && index < 5) {
+            this.state.student_list.map((user, index) => {
+              if (index >= 0 && index < this.state.student_list.length && index < 4) {
                 return (
                   <TouchableHighlight onPress={() => this.moveToPersonScreen(user)}>
                     <Image style={styles.head_icon}
