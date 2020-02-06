@@ -289,9 +289,9 @@ export default class ProfileScreen extends Component {
           />
         </View>
 
-        <View style={ styles.status_view }>
-          <Text style={ styles.normal_text }>I can teach:</Text>
-        </View>
+        <View style={ styles.skill_view }>
+          <Text style={ styles.skill_title }>I can teach</Text>
+        
 
         <View style={ styles.status_view }>
           <Text style={ styles.title }>Arts & Crafts</Text>
@@ -340,11 +340,13 @@ export default class ProfileScreen extends Component {
           />
         </View>
 
-
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.normal_text }>I want to learn:</Text>
         </View>
+
+
+
+        <View style={ styles.skill_view }>
+          <Text style={ styles.skill_title }>I want to learn</Text>
+        
 
         <View style={ styles.status_view }>
           <Text style={ styles.title }>Arts & Crafts</Text>
@@ -392,15 +394,10 @@ export default class ProfileScreen extends Component {
               style={ styles.item }
           />
         </View>
-        
-        <View>
           
         </View>
 
-        <View style={ styles.favorite_title }>
-          <FontAwesomeIcon icon={ faStar } style={{color: 'dodgerblue'}} size={16}/>
-          <Text style={{fontSize: 18, justifyContent: 'center', textAlign: 'center', fontWeight: 'bold'}}>Favorited:</Text>
-        </View>
+       
 
         <View style={styles.icon_banner}>
           
@@ -457,7 +454,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    width: 300,
+    width: 280,
     fontSize: 18,
     alignSelf: "flex-start",
   },
@@ -476,11 +473,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
 
-  status_view: {
+  skill_title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+
+  skill_view: {
     width: 360,
+    borderWidth: 1,
+    marginTop: 4,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 4,
+    borderRadius: 5,
+  },
+
+  status_view: {
+    width: 320,
     height: 32,
     // justifyContent: 'flex-start',
     flexDirection: 'row',
+    marginBottom: 2,
     // textAlign: 'center',
   },
 

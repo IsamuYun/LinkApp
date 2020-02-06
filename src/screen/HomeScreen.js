@@ -6,18 +6,16 @@ import { createBottomTabNavigator } from 'react-navigation-tabs';
 import ProfileScreen from './ProfileScreen';
 import PersonScreen from './PersonScreen';
 import { ChatScreen } from './ChatScreen';
+import ConversationScreen from './ConversationScreen';
 
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { faComments, faIdBadge, faUser } from '@fortawesome/free-regular-svg-icons';
 
-import AsyncStorage from "@react-native-community/async-storage";
-
 import WS from '../socket/ws';
 import { counter } from "@fortawesome/fontawesome-svg-core";
 
 import Store from "../store/store";
-import { isThisTypeNode, resolveModuleName } from "typescript";
 
 import { NavigationEvents } from "react-navigation";
 
@@ -258,11 +256,11 @@ export const HomeStack = createBottomTabNavigator({
       }
     },
   },
-  Chat: {
-    screen: ChatScreen,
+  Conversation: {
+    screen: ConversationScreen,
     navigationOptions: {
-      title: 'Chat',
-      tabBarLabel: 'Chat',
+      title: 'Session',
+      tabBarLabel: 'Session',
       tabBarIcon: ({tintColor}) => {
         return <FontAwesomeIcon icon={ faComments } color={ tintColor } size={20}/>;
       }
@@ -277,5 +275,5 @@ export const HomeStack = createBottomTabNavigator({
         return <FontAwesomeIcon icon={ faUser } color={ tintColor } size={20}/>;
       }
     },
-  }
+  },
 });

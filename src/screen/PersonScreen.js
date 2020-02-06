@@ -124,11 +124,11 @@ export default class PersonScreen extends Component {
   moveToChatScreen = () => {
     this.props.navigation.navigate("Chat", {
       host_uid: this.state.other_uid,
-      host_name: this.state.other_user_name,
-      host_head_portraits: this.state.other_head_portraits,
-      user_id: this.state.user_id,
-      user_name: this.state.user_name,
-      head_portraits: this.state.head_portraits,
+      participant_uid: this.state.user_id,
+      sender_uid: this.state.user_id,
+      sender_name: this.state.user_name,
+      sender_head_portrait: this.state.head_portraits,
+      conversation_id: "",
     });
   }
 
@@ -195,20 +195,17 @@ export default class PersonScreen extends Component {
       );
     }
     else {
-
-    
-    return (
-      <View style={ styles.container }>
-    
-        <NavigationEvents
-          onWillFocus={(payload) => {this.willFocus(payload)}}
-        />
-        
-        <View style={ styles.header_view }>
-          <Image style={ styles.head_portrial } 
-            source={ { uri: WS.BASE_URL + this.state.other_head_portraits } }
+      return (
+        <View style={ styles.container }>
+          <NavigationEvents
+            onWillFocus={(payload) => {this.willFocus(payload)}}
           />
-        </View>
+        
+          <View style={ styles.header_view }>
+            <Image style={ styles.head_portrial } 
+              source={ { uri: WS.BASE_URL + this.state.other_head_portraits } }
+            />
+          </View>
 
         <View style={ styles.name_view }>
           <Text style={{ fontSize: 18, fontWeight: 'bold'}}>{this.state.other_user_name}</Text>
@@ -282,7 +279,7 @@ const styles = StyleSheet.create({
 
   flat_item: {
     backgroundColor: '#99CCff',
-    padding: 10,
+    paddingLeft: 10,
     marginVertical: 4,
     marginHorizontal: 16,
     flexDirection: "row",
