@@ -12,6 +12,7 @@ import SignUpScreen from "./SignUpScreen";
 
 import WS from '../socket/ws';
 import Store from "../store/store";
+import { ChatScreen } from './ChatScreen';
 
 export class SignInScreen extends Component {
   constructor(props) {
@@ -163,14 +164,13 @@ export const AppNavigator = createStackNavigator(
   {
     SignIn: SignInScreen,
     Home: HomeStack,
-    SignUp: SignUpScreen
+    SignUp: SignUpScreen,
+    Chat: ChatScreen,
   },
   {
     initialRouteName: 'SignIn',
   }
 );
-
-
   
 export default createAppContainer(AppNavigator);
   

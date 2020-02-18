@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-import { Platform, View } from 'react-native';
-import PropTypes from 'prop-types';
+import { Platform } from 'react-native';
 
 import { GiftedChat } from 'react-native-gifted-chat';
 import emojiUtils from 'emoji-utils';
@@ -8,11 +7,6 @@ import emojiUtils from 'emoji-utils';
 import SlackMessage from "../message/SlackMessage";
 
 import WS from '../socket/ws';
-import Store from '../store/store';
-
-import AsyncStorage from "@react-native-community/async-storage";
-
-import { NavigationEvents } from "react-navigation";
 
 import { withNavigationFocus } from 'react-navigation';
 
@@ -22,27 +16,35 @@ export class ChatScreen extends Component {
     const { navigation } = props;
     this.state = {
       messages: [],
-      host_uid: navigation.getParam("user_id", ""),
-      host_name: navigation.getParam("user_name", ""),
-      host_head_portraits: navigation.getParam("head_portraits", ""),
-      user_id: navigation.getParam("user_id", ""),
-      user_name: navigation.getParam("user_name", ""),
-      head_portraits: navigation.getParam("head_portraits", ""),
-      user_info: {},
+      conversation_id: navigation.getParam("conversation_id", ""),
+      host_uid: navigation.getParam("host_uid", ""),
+      participant_uid: navigation.getParam("participant_uid", ""),
+      sender_uid: navigation.getParam("sender_uid", ""),
+      sender_name: navigation.getParam("sender_name", ""),
+      sender_head_portrait: navigation.getParam("sender_head_portrait", ""),
       sender: {
-        _id: '',
-        name: 'Kakashi',
-        avatar: WS.BASE_URL + "kakashi.png",
+        _id: navigation.getParam("sender_uid", ""),
+        name: navigation.getParam("sender_name", "Kakashi"),
+        avatar: WS.BASE_URL + navigation.getParam("sender_head_portrait", "kakashi.png"),
       },
     };
-    this.state.sender._id = this.state.user_id;
-    this.state.sender.name = this.state.user_name;
-    this.state.sender.avatar = WS.BASE_URL + this.state.head_portraits;
     
     this.socket = WS.getSocket();
-    this.socket.on("single_user_res", (message) => {this.userResponse(message)});
+    //
+  }
 
-    
+  getConversationId = () => {
+    this.socket.emit("get_conversation_id", 
+      this.state.host_uid, 
+      this.state.participant_uid, 
+      (result) => {this.resConversationId(result)});
+  }
+
+  // Get Conversation Id, cause sometime conversation id is empty.
+  resConversationId = (result) => {
+    if (result) {
+      this.setState({conversation_id: result});
+    }
   }
 
   messageList = async (result) => {
@@ -59,89 +61,55 @@ export class ChatScreen extends Component {
         }
       };
       msg._id = index;
-      msg.text = message.message;
-      msg.user._id = message.user_id;
-      if (msg.user._id == this.state.host_uid) {
-        msg.user.name = this.state.host_name;
-        msg.user.avatar = WS.BASE_URL + this.state.host_head_portraits;
-      }
-      else if (msg.user.id == this.state.user_id) {
-        msg.user.name = this.state.user_name;
-        msg.user.avatar = WS.BASE_URL + this.state.head_portraits;
-      }
-      else {
-        this.socket.emit("get_single_user", message.user_id);
-      }
-      
+      msg.text = message.content;
+      msg.user._id = message.sender_uid;
+      msg.user.name = message.sender_name;
+      msg.user.avatar = WS.BASE_URL + message.sender_head_portrait;
+      console.log(msg);
       msg_list.push(msg);
     });
     msg_list_reverse = msg_list.reverse();
     this.setState({messages: msg_list_reverse});
-    console.log(this.state.messages);
   }
 
-  getMessages = () => {
-    /*
-    if (this.state.host_uid === '') {
-      this.state.host_uid = this.state.user_id;
-      this.state.host_name = this.state.host_name;
-      this.state.host_head_portraits = this.state.head_portraits;
-    }
-    */
-    this.socket.emit("get_message", this.state.host_uid, (result) => {this.messageList(result)});
+  getMessages = async () => {
+    console.log("Getting Message")
+    this.socket.emit("get_message", this.state.conversation_id, (result) => {this.messageList(result)});
   }
 
   getUserId = async () => {
-    if (this.state.host_uid === '') {
-      this.state.host_uid = this.state.user_id;
-      this.state.host_name = this.state.host_name;
-      this.state.host_head_portraits = this.state.head_portraits;
-    }
-    this.socket.emit("get_message", this.state.host_uid, (result) => {this.messageList(result)});
-  }
-
-  userResponse = (message) => {
-    if (message.code == 0) {
-      user_info = message.data;
-      let sender = {
-        _id: user_info.user_id,
-        name: user_info.user_name,
-        avatar: WS.BASE_URL + user_info.head_portraits
-      }
-      let list = this.state.messages;
-      
-      for (let i = 0; i < list.length; i++) {
-        if (list[i].user._id == sender._id) {
-          list[i].user._id = sender._id;
-          list[i].user.name = sender.name;
-          list[i].user.avatar = sender.avatar;
-        }
-      }
-      
-      this.setState({messages:list});
-    }
-  }
-
-  setHost = () => {
-    const {navigation} = this.props;
     
-    this.state.host_uid = navigation.getParam("host_uid", "");
-    this.state.host_name = navigation.getParam("host_name", "");
-    this.state.host_head_portraits = navigation.getParam("host_head_portraits", "");
-    if (this.state.host_uid === '') {
-      this.setState({host_uid: this.state.user_id});
-      this.setState({host_name: this.state.user_name});
-      this.setState({host_head_portraits: this.state.head_portraits});
-    }
-    this.state.user_id = navigation.getParam("user_id", "");
-    this.state.user_name = navigation.getParam("user_name", "");
-    this.state.head_portraits = navigation.getParam("head_portraits", "");
+  }
+
+  setInit = () => {
+    // const {navigation} = this.props;
+
+    
+
+    console.log("conversation id is " + this.state.conversation_id);
+    console.log("sender uid is " + this.state.sender_uid);
+    console.log("sender name is " + this.state.sender_name);
+    console.log("sender head portrait is " + this.state.sender_head_portrait);
+    console.log("host uid is " + this.state.host_uid);
+    console.log("participant uid is " + this.state.participant_uid);
+    //this.setState({conversation_id: navigation.getParam("conversation_id", "")});
+    //this.setState({sender_uid: navigation.getParam("sender_uid", "")});
+    //this.setState({sender_name: navigation.getParam("sender_name", "")});
+    //this.setState({sender_head_portrait: navigation.getParam("sender_head_portrait", "")});
     //this.setState({host_uid: navigation.getParam("host_uid", "")});
-    //this.setState({host_name: navigation.getParam("host_name", "")});
-    //this.setState({host_head_portraits: navigation.getParam("host_head_portraits", "")});
-    //this.setState({user_id: navigation.getParam("user_id", "")});
-    //this.setState({user_name: navigation.getParam("user_name", "")});
-    //this.setState({head_portraits: navigation.getParam("head_portraits", "")});
+    //this.setState({participant_uid: navigation.getParam("participant_uid", "")});
+    /*
+    sender = {
+      _id: this.state.sender_uid,
+      name: this.state.sender_name,
+      avatar: WS.BASE_URL + this.state.sender_head_portrait,
+    };
+    */
+    // this.setState({sender: sender});
+
+    if (this.state.conversation_id == "") {
+      this.getConversationId();
+    }
   }
 
   componentDidMount() {
@@ -150,8 +118,8 @@ export class ChatScreen extends Component {
       // The screen is focused
       // Call any action
       console.log("Chat Screen is focused.");
-      this.setHost();
-      this.getUserId();
+      this.setInit();
+      this.getMessages();
       
     });
   }
@@ -170,21 +138,23 @@ export class ChatScreen extends Component {
   }
   
   async onSend(messages = []) {
-    //console.log("Host uid: " + this.state.host_uid);
-    
-    //console.log("Chat other uid:" + this.state.other_uid);
-    //console.log("Chat user id: " + this.state.user_id);
-    //console.log(messages);
-    //console.log("Message: " + messages[0].text);
-    this.socket.emit("send_message", this.state.host_uid, this.state.user_id, messages[0].text);
-
+    this.setInit();
+    this.socket.emit("send_message", this.state.conversation_id, 
+          this.state.host_uid, 
+          this.state.sender_uid, 
+          messages[0].text,
+          );
 
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages),
     }))
-    // this.setHost();
-    this.getUserId();
+
+    // this.getMessages();
     
+    
+  }
+
+  renewConversationId = () => {
     
   }
 
@@ -211,10 +181,10 @@ export class ChatScreen extends Component {
     // setTimeout(() => {this.getUserId()}, 30000)
     return (
       <GiftedChat
-        messages={this.state.messages}
-        onSend={messages => this.onSend(messages)}
-        user={this.state.sender}
-        renderMessage={this.renderMessage}
+        messages={ this.state.messages }
+        onSend={ messages => this.onSend(messages) }
+        user={ this.state.sender }
+        renderMessage={ this.renderMessage }
         >
       </GiftedChat>
     )
