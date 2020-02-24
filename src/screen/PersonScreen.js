@@ -27,7 +27,7 @@ export default class PersonScreen extends Component {
     this.state = {
       user_name: navigation.getParam("user_name", ""),
       user_id: navigation.getParam("user_id", ""),
-      head_portraits: "",
+      head_portraits: navigation.getParam("head_portraits", ""),
       other_uid: navigation.getParam("other_uid", ""),
       other_user_name: navigation.getParam("other_user_name", ""),
       other_head_portraits: navigation.getParam("other_head_portraits", "Yasuo.jpg"),
@@ -207,9 +207,10 @@ export default class PersonScreen extends Component {
             />
           </View>
 
-        <View style={ styles.name_view }>
-          <Text style={{ fontSize: 18, fontWeight: 'bold'}}>{this.state.other_user_name}</Text>
-        </View>
+          <View style={ styles.name_view }>
+            <Text style={{ fontSize: 18, fontWeight: 'bold'}}>{this.state.other_user_name}</Text>
+          </View>
+
         <View style={ styles.button_view }>
           <TouchableHighlight
             style={ styles.submit }
@@ -224,6 +225,7 @@ export default class PersonScreen extends Component {
             <Text style={ styles.submitText }>Message</Text>
           </TouchableHighlight>
         </View>
+
         <View style={ styles.text_view }>
           <Text style={ styles.normal_text }>Money: {this.state.other_user_info.money}</Text>
           <Text style={ styles.normal_text }>My school is {this.state.other_user_info.school}</Text>
@@ -231,40 +233,34 @@ export default class PersonScreen extends Component {
           <Text style={ styles.normal_text }>I want to learn {this.state.learn_str}</Text>
         </View>
 
-        <View styles={ styles.review_view }>
+        <View style={ styles.send_review_view }>
           <TextInput style={ styles.review_content }
               placeholder="Leave a review:"
               onChangeText={(review_content) => { this.setState({review_content}) }}
               value={ this.state.review_content }
           />
           <TouchableHighlight
-            
+            style={ styles.send_review_submit }
             onPress={ () => this.sendReview() }
           >
-           <Text style={ styles.review_button }>Review</Text> 
+            <Text style={ styles.send_review_submit_text }>Send Review</Text> 
           </TouchableHighlight>
-          
         </View>
 
-        <FlatList
-          data={this.state.review_list}
-          renderItem={({item}) => (
-            <View style={styles.flat_item}>
-              
+        <View>
+          <FlatList
+            data={this.state.review_list}
+            renderItem={({item}) => (
+              <View style={styles.flat_item}>
                 <Image style={ styles.flat_reviewer_head_portrait } 
                   source={ { uri: WS.BASE_URL + item.reviewer_head_portraits} }
                 />
-              <Text style={styles.flat_title}>{item.content}</Text>
-            </View>
-          )
-
-
-          }
-          keyExtractor={item => item.id}
-        />
-        
-        
-      
+                <Text style={styles.flat_title}>{item.content}</Text>
+              </View>
+            )}
+            keyExtractor={item => item.id}
+          />
+        </View>
       </View>
     );
     }
@@ -326,40 +322,51 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
 
+  send_review_view: {
+    flexDirection: "column",
+    paddingLeft: 8,
+    width: 360,
+
+  },
+  /*
   review_view: {
     flexDirection: "row",
-    width: 360,
-    height: 32,
-    
+    width: 300,
+    height: 24,
+    paddingLeft: 4,
+    // alignContent: "flex-start",
   },
-
+  */
   review_content: {
-    width: 200,
-    fontSize: 20,
-    alignSelf: "flex-start",
+    
+    width: 360,
+    fontSize: 18,
+    //alignSelf: "flex-start",
     height: 32,
+    paddingLeft: 12,
   },
 
-  review_button: {
-    marginRight:16,
+  send_review_submit: {
+    marginRight:10,
     marginLeft:10,
-    paddingBottom: 16,
+    paddingTop:2,
     backgroundColor:'#68a0cf',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#fff',
-    width: 100,
+    width: 160,
     height: 32,
+  },
+
+  send_review_submit_text: {
     color:'white',
     textAlign:'center',
     fontSize: 24,
-    alignSelf: "flex-end",
   },
 
   submit: {
     marginRight:10,
     marginLeft:10,
-    // marginTop:10,
     paddingTop:2,
     backgroundColor:'#68a0cf',
     borderRadius: 8,

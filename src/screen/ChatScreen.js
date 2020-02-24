@@ -27,8 +27,8 @@ export class ChatScreen extends Component {
         name: navigation.getParam("sender_name", "Kakashi"),
         avatar: WS.BASE_URL + navigation.getParam("sender_head_portrait", "kakashi.png"),
       },
+      update_time: 0,
     };
-    
     this.socket = WS.getSocket();
     //
   }
@@ -65,7 +65,6 @@ export class ChatScreen extends Component {
       msg.user._id = message.sender_uid;
       msg.user.name = message.sender_name;
       msg.user.avatar = WS.BASE_URL + message.sender_head_portrait;
-      console.log(msg);
       msg_list.push(msg);
     });
     msg_list_reverse = msg_list.reverse();
@@ -73,7 +72,7 @@ export class ChatScreen extends Component {
   }
 
   getMessages = async () => {
-    console.log("Getting Message")
+    console.log("Getting Message");
     this.socket.emit("get_message", this.state.conversation_id, (result) => {this.messageList(result)});
   }
 
@@ -154,16 +153,32 @@ export class ChatScreen extends Component {
     
   }
 
+  componentDidUpdate() {
+    console.log("componentDidUpdate");
+    // this.getMessages();
+  }
+
   renewConversationId = () => {
     
+  }
+
+  shouldComponentUpdate() {
+    let milliseconds = new Date().getTime();
+    if (milliseconds - this.state.update_time >= 6000) {
+      console.log("Update Message");
+      this.state.update_time = milliseconds;
+      this.getMessages();
+      return true;
+    }
+    return false;
   }
 
   renderMessage(props) {
     const {
       currentMessage: { text: currText },
-    } = props
+    } = props;
 
-    let messageTextStyle
+    let messageTextStyle;
 
     // Make "pure emoji" messages much bigger than plain text.
     if (currText && emojiUtils.isPureEmojiString(currText)) {
@@ -178,7 +193,6 @@ export class ChatScreen extends Component {
   }
 
   render() {
-    // setTimeout(() => {this.getUserId()}, 30000)
     return (
       <GiftedChat
         messages={ this.state.messages }

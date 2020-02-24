@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image, Button, Switch } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableHighlight, Image, FlatList, Switch } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 
@@ -18,12 +18,12 @@ export default class ProfileScreen extends Component {
     this.state = {
       photo: null,
       message: "",
-      user_id: "",
+      user_id: navigation.getParam("user_id", ""),
+      user_name: navigation.getParam("user_name", ""),
+      head_portraits: navigation.getParam("head_portraits", ""),
       server_file_name: "",
-      head_portraits: navigation.getParam("head_portraits", "Yasuo.jpg"),
       user: {
         money: 0,
-        user_name: "",
         class_name: "",
         school: "",
         skill: "",
@@ -47,6 +47,7 @@ export default class ProfileScreen extends Component {
       school: "",
       skill: 0,
       lesson: "",
+      review_list: [],  // User's review list.
     }
 
     this.socket = WS.getSocket();
@@ -54,20 +55,24 @@ export default class ProfileScreen extends Component {
   }
 
   componentDidMount() {
-    this.getUserId();
-    
+    console.log("componentDidMount:");
+    // this.getUserFromStore();
+    this.getUserInfo();
+    /*
     setTimeout(() => {
-      this.getUser();
-    }, 1000);
-
-    // this.getMoney();
-    this.getHeadPortraits();
+      this.getUserInfo();
+    }, 10000);
+    */
 
     this.socket.on("read_chunk_response", (message) => {this.response(message)});
     this.socket.on("transfer_response", (message) => {this.transferResponse(message)});
     this.socket.on("single_user_res", (message) => {this.userResponse(message)});
     
   }
+
+  willFocus = (payload) => {
+    this.getUserInfo();
+  } 
 
   response(message) {
     if (message.code == 0) {
@@ -85,8 +90,8 @@ export default class ProfileScreen extends Component {
   userResponse(message) {
     if (message.code == 0) {
       this.setState({user: message.data});
-      console.log("Get single user info:");
-      console.log(this.state.user);
+      console.log("Profile user info:");
+      // console.log(this.state.user);
       if (this.state.user.class_name && this.state.class_name === "") {
         this.setState({class_name: this.state.user.class_name});
       }
@@ -101,36 +106,39 @@ export default class ProfileScreen extends Component {
       }
     }
   }
-
-  getUserId = async () => {
+  
+  // Get user info from AsyncStorage
+  getUserFromStore = async () => {
+    let user_id = "";
+    let user_name = "";
+    let head_portraits = "";
     try {
-      const user_id = await AsyncStorage.getItem("user_id");
-      
-      this.setState({user_id});
+      user_id = await AsyncStorage.getItem("user_id");
+      user_name = await AsyncStorage.getItem("user_name");
+      head_portraits = await AsyncStorage.getItem("head_portraits");
     }
     catch (e) {
       console.log(e.message);
     }
-  }
+    this.setState({user_id});
+    this.setState({user_name});
+    this.setState({head_portraits});
 
-  getHeadPortraits = async () => {
-    try {
-      const head_portraits = await AsyncStorage.getItem("head_portraits");
-      this.setState({head_portraits});
-    }
-    catch (e) {
-      console.log(e.message);
-    }
   }
-
+  
   getMoney = async () => {
     this.socket.emit("get_money", this.state.user_id, function(money) {
       this.setState({money});
     }.bind(this));
   }
 
-  getUser = () => {
-    this.socket.emit("get_single_user", this.state.user_id); 
+  getUserInfo = () => {
+    // console.log("Profile user_id: " + this.state.user_id);
+    // console.log("Profile user_name: " + this.state.user_name);
+    // console.log("Profile head portrait: " + this.state.head_portraits);
+    this.socket.emit("get_single_user", this.state.user_id);
+
+    this.getReviewList();
   }
   
   handleChoosePhoto = async () => {
@@ -144,15 +152,13 @@ export default class ProfileScreen extends Component {
     ImagePicker.showImagePicker(options, async (response) => {
       if (response.uri) {
         this.setState({ photo: response });
-        
         this.startTransfer(response.fileName, response.fileSize);
       }
     });
   };
 
   writeFile(filename, offset, data) {
-    const user_id = this.state.user_id;
-    this.socket.emit("write_chunk", filename, offset, data, user_id, function(result) {
+    this.socket.emit("write_chunk", filename, offset, data, this.state.user_id, function(result) {
       if (result) {
         console.log("file upload success.");
         this.setState({head_portraits: filename});
@@ -199,10 +205,10 @@ export default class ProfileScreen extends Component {
   }
 
   onUpdateProfile = () => {
-    console.log("Class name: " + this.state.class_name);
-    console.log("School: " + this.state.school);
-    console.log("Skills: " + this.state.skill);
-    console.log("Lessons: " + this.state.lesson);
+    // console.log("Class name: " + this.state.class_name);
+    // console.log("School: " + this.state.school);
+    // console.log("Skills: " + this.state.skill);
+    // console.log("Lessons: " + this.state.lesson);
 
     const {user} = this.state;
 
@@ -241,6 +247,20 @@ export default class ProfileScreen extends Component {
     this.setState({school: value});
     this.onUpdateProfile();
   }
+  // Get review list
+  getReviewList = async () => {
+    this.socket.emit("get_review_list", this.state.user_id, (result) => {this.reviewList(result)});
+  }
+
+  reviewList = async (result) => {
+    review_list = [];
+    result.map((review, index) => {
+      console.log(review);
+      review.id = index;
+      review_list.push(review);
+    });
+    this.setState({review_list: review_list});
+  }
 
   render() {
     const { photo } = this.state;
@@ -253,9 +273,14 @@ export default class ProfileScreen extends Component {
     }
     return (
       <View style={ styles.container }>
+        <NavigationEvents
+          onWillFocus={(payload) => {this.willFocus(payload)}}
+        />
+        
         <View>
           { user_head_portraits }
         </View>
+        
         <View>
           <TouchableHighlight onPress={ () => {this.handleChoosePhoto()} }>
             <Text style={{fontSize: 18, color: 'dodgerblue', fontWeight: 'bold'}}>
@@ -263,16 +288,19 @@ export default class ProfileScreen extends Component {
             </Text>
           </TouchableHighlight>
         </View>
-        <View>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{ this.state.user.user_name }</Text>
+        
+        <View style={styles.status_view}>
+          <Text style={ styles.normal_title }>Name:</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{ this.state.user_name }</Text>
         </View>
-        <View style={styles.balance_view}>
-          <Text style={{fontSize: 18, justifyContent: 'center', textAlign: 'center', fontWeight: 'bold'}}>Balance:</Text>
-          <Text style={styles.dollar_number}>{ this.state.user.money }</Text>
+        
+        <View style={styles.status_view}>
+          <Text style={ styles.normal_title }>Balance:</Text>
+          <Text style={ styles.dollar_number }>{ this.state.user.money }</Text>
         </View>
 
         <View style={ styles.status_view }>
-          <Text style={ styles.normal_text }>I'm class of </Text>
+          <Text style={ styles.normal_title }>I'm class of:</Text>
           <TextInput style={ {width: 120, height: 24, fontSize: 18} }
               placeholder="Class"
               onChangeText={(text) => this.updateClassName(text)}
@@ -281,136 +309,130 @@ export default class ProfileScreen extends Component {
         </View>
         
         <View style={ styles.status_view }>
-          <Text style={ styles.normal_text }>My school is </Text>
+          <Text style={ styles.normal_title }>My school is:</Text>
           <TextInput style={ {width: 120, height: 24, fontSize: 18} }
               placeholder="School"
               onChangeText={(text) => this.updateSchool(text)}
               value={ this.state.school }
           />
         </View>
+        <View style={ styles.skill_panel}>
+          <View style={ styles.skill_view }>
+            <Text style={ styles.skill_title }>I can teach</Text>
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Arts & Crafts</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "teach", "Arts")} }
+                value={ this.state.user.teach.Arts ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
 
-        <View style={ styles.skill_view }>
-          <Text style={ styles.skill_title }>I can teach</Text>
-        
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Computers</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "teach", "Computer")} }
+                value={ this.state.user.teach.Computer ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
 
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Arts & Crafts</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "teach", "Arts")} }
-              value={ this.state.user.teach.Arts ? true : false }
-              style={ styles.item }
-          />
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Language</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "teach", "Language")} }
+                value={ this.state.user.teach.Language ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Literature</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "teach", "Literature")} }
+                value={ this.state.user.teach.Literature ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Mathematics</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "teach", "Mathematics")} }
+                value={ this.state.user.teach.Mathematics ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+          </View>
+
+          <View style={ styles.skill_view }>
+            <Text style={ styles.skill_title }>I want to learn</Text>
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Arts & Crafts</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "learn", "Arts")} }
+                value={ this.state.user.learn.Arts ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Computers</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "learn", "Computer")} }
+                value={ this.state.user.learn.Computer ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Language</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "learn", "Language")} }
+                value={ this.state.user.learn.Language ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Literature</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "learn", "Literature")} }
+                value={ this.state.user.learn.Literature ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+
+            <View style={ styles.status_view }>
+              <Text style={ styles.switch_title }>Mathematics</Text>
+              <Switch
+                onValueChange={ (value) => {this.updateState(value, "learn", "Mathematics")} }
+                value={ this.state.user.learn.Mathematics ? true : false }
+                style={ styles.switch_item }
+              />
+            </View>
+          </View>
         </View>
 
         <View style={ styles.status_view }>
-          <Text style={ styles.title }>Computers</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "teach", "Computer")} }
-              value={ this.state.user.teach.Computer ? true : false }
-              style={ styles.item }
+          <Text style={ styles.normal_title }>Review List:</Text>
+        </View>
+
+        <View style={ styles.review_view }>
+          <FlatList
+            data={this.state.review_list}
+            renderItem={({item}) => (
+              <View style={styles.flat_item}>
+                <Image style={ styles.flat_reviewer_head_portrait } 
+                  source={ { uri: WS.BASE_URL + item.reviewer_head_portraits} }
+                />
+                <Text style={styles.flat_title}>{item.content}</Text>
+              </View>
+            )}
+            keyExtractor={item => item.id}
           />
         </View>
 
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Language</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "teach", "Language")} }
-              value={ this.state.user.teach.Language ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Literature</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "teach", "Literature")} }
-              value={ this.state.user.teach.Literature ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Mathematics</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "teach", "Mathematics")} }
-              value={ this.state.user.teach.Mathematics ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-        </View>
-
-
-
-        <View style={ styles.skill_view }>
-          <Text style={ styles.skill_title }>I want to learn</Text>
-        
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Arts & Crafts</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "learn", "Arts")} }
-              value={ this.state.user.learn.Arts ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Computers</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "learn", "Computer")} }
-              value={ this.state.user.learn.Computer ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Language</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "learn", "Language")} }
-              value={ this.state.user.learn.Language ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Literature</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "learn", "Literature")} }
-              value={ this.state.user.learn.Literature ? true : false }
-              style={ styles.item }
-          />
-        </View>
-
-
-
-        <View style={ styles.status_view }>
-          <Text style={ styles.title }>Mathematics</Text>
-          <Switch
-              onValueChange={ (value) => {this.updateState(value, "learn", "Mathematics")} }
-              value={ this.state.user.learn.Mathematics ? true : false }
-              style={ styles.item }
-          />
-        </View>
-          
-        </View>
-
-       
-
-        <View style={styles.icon_banner}>
-          
-        </View>
-
-        <View style={ styles.message_view }>
-          <Text style={ {padding: 10, fontSize: 24} }>
-            { 
-              this.state.message
-            }
-          </Text>
-        </View>
-        
       </View>
     );
   }
@@ -442,26 +464,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
 
-  text_view: {
-    padding: 10,
-    width: 360,
-    height: 340,
-  },
-
   normal_text: {
     width: 180,
     fontSize: 18,
   },
 
-  title: {
-    width: 280,
+  normal_title: {
+    width: 180,
     fontSize: 18,
-    alignSelf: "flex-start",
+    fontWeight: 'bold',
+    paddingLeft: 4,
   },
 
-  item: {
-    width: 60,
-    alignSelf: "flex-end",
+  switch_title: {
+    width: 112,
+    fontSize: 18,
+    // alignSelf: "flex-start",
+  },
+
+  switch_item: {
+    width: 56,
+    // alignSelf: "flex-end",
   },
 
   balance_view: {
@@ -474,26 +497,32 @@ const styles = StyleSheet.create({
   },
 
   skill_title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 
-  skill_view: {
+  skill_panel: {
     width: 360,
+    flexDirection: 'row',
+  },
+
+  skill_view: {
+    width: 180,
     borderWidth: 1,
-    marginTop: 4,
-    paddingLeft: 10,
-    paddingRight: 10,
+    marginTop: 2,
+    marginRight: 4,
+    paddingLeft: 4,
+    paddingRight: 4,
     paddingBottom: 4,
     borderRadius: 5,
   },
 
   status_view: {
-    width: 320,
+    width: 360,
     height: 32,
     // justifyContent: 'flex-start',
     flexDirection: 'row',
-    marginBottom: 2,
+    // marginBottom: 2,
     // textAlign: 'center',
   },
 
@@ -517,12 +546,14 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     flexDirection: "row",
   },
+
   icon_banner: {
     flexDirection: 'row',
     marginLeft: 10,
     height: 120,
     width: 390,
   },
+
   head_icon: {
     width: 72,
     height: 72,
@@ -531,9 +562,32 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     margin: 1,
   },
-  message_view: {
-    width: 360,
-    height: 60,
-    color: 'red'
+
+  flat_item: {
+    backgroundColor: '#99CCff',
+    paddingLeft: 4,
+    marginVertical: 2,
+    marginHorizontal: 8,
+    flexDirection: "row",
   },
+
+  flat_title: {
+    paddingLeft: 10,
+    fontSize: 18,
+    marginTop: 4,
+    paddingTop: 8,
+  },
+
+  flat_reviewer_head_portrait: {
+    width: 48,
+    height: 48,
+    
+    borderWidth: 1,
+    borderRadius: 100,
+  },
+
+  review_view: {
+    width: 360,
+  },
+
 });
