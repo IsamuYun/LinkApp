@@ -17,17 +17,13 @@ export default class SignUpScreen extends Component {
       message: '',
       user_id: '',
     };
+
+    this.socket = WS.getSocket();
+
+    this.socket.on("sign_up_response", (message) => {this.response(message)});
   }
 
   componentDidMount() {
-    
-    this.socket = WS.getSocket();
-
-    this.socket.on('connect', () => {
-      console.log('connected')
-    });
-
-    this.socket.on("sign_up_response", (message) => {this.response(message)});
     
   }
 

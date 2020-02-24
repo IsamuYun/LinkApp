@@ -23,25 +23,23 @@ export class SignInScreen extends Component {
       message: '',
     };
     
-    this.signIn = this.signIn.bind(this);
-    this.response = this.response.bind(this);
-
-    
+    this.socket = WS.getSocket();
+    this.socket.on("sign_in_res", (message) => {this.response(message)});
   }
 
   componentDidMount() {
-    this.socket = WS.getSocket();
+    
   }
   
-  signIn() {
+  signIn = () => {
     var data = {
       "user_name": this.state.user_name, 
       "password": this.state.password
     };
-    this.socket.emit("sign_in", data.user_name, data.password, this.response);
+    this.socket.emit("sign_in", data.user_name, data.password);
   }
 
-  response(message) {
+  response = (message) => {
     const user_id = message.user_id;
     Store.storeUserId(user_id);
     Store.storeUserName(message.user_name);
