@@ -1,4 +1,5 @@
-import io from 'socket.io-client';
+//import io from 'socket.io-client';
+import io from 'socket.io-client/dist/socket.io';
 
 console.ignoredYellowBox = ["Remote debugger"]
 import { YellowBox } from "react-native"
@@ -7,7 +8,7 @@ YellowBox.ignoreWarnings([
 ]);
 
 // const SERVER_URL = 'ws://192.168.0.174:5000';
-const SERVER_URL = 'ws://157.245.124.194:5000';
+const SERVER_URL = 'http://157.245.124.194:5000';
 // const SERVER_URL = 'ws://172.31.99.189:5000';
 // const SERVER_URL = 'ws://172.31.99.210:5000';
 

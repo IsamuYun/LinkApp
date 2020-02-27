@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { StyleSheet, View, Text, TextInput, Button } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableHighlight } from 'react-native';
 
 // import { socket } from "../socket/Socket-IO";
 
@@ -74,39 +74,43 @@ export class SignInScreen extends Component {
           </View>
           
           <View style={ styles.textinput_view }>
-            <TextInput style={ {width: 340, height: 40, fontSize: 18} }
+            <TextInput style={ styles.textinput }
               placeholder="Phone number or username"
               onChangeText={(user_name) => this.setState({user_name})}
               value={this.state.user_name}
             />
-            <TextInput style={ {width: 340, height: 40, fontSize: 18} }
+            <TextInput style={ styles.textinput }
               placeholder="Password"
               onChangeText={(password) => this.setState({password})}
               secureTextEntry={true}
               value={this.state.password}
             />
-            <Button 
-              title="Sign In"
-              onPress={() => this.onUserLogin()}
-            />
+            <TouchableHighlight
+              style={ styles.submit }
+              onPress={ () => this.onUserLogin() }
+            >
+              <Text style={ {color: 'white', fontSize: 24, fontWeight: 'bold'} }>Sign In</Text>
+            </TouchableHighlight>
           </View>
           
+          <View style={ styles.sigh_up_view }>
+            <Text style={ {fontSize: 20} }>
+              Don't have an account?
+            </Text>
+            <TouchableHighlight
+              style={ styles.submit }
+              onPress={ () => this.onSignUp() }
+            >
+              <Text style={ {color: 'white', fontSize: 24, fontWeight: 'bold'} }>Sign Up</Text>
+            </TouchableHighlight>
+          </View>
+
           <View style={ styles.message_view }>
             <Text style={ {padding: 10, fontSize: 24} }>
               { 
                 this.state.message
               }
             </Text>
-          </View>
-    
-          <View style={ styles.sigh_up_view }>
-            <Text style={ {fontSize: 20} }>
-              Don't have an account?
-            </Text>
-            <Button
-              title="Sign Up"
-              onPress={ () => this.onSignUp() }
-            />
           </View>
     
     
@@ -125,8 +129,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title_view: {
-    width: 360,
-    height: 40,
+    width: '90%',
+    height: 48,
     backgroundColor: 'skyblue',
     fontSize: 30,
     color: 'white',
@@ -134,24 +138,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   textinput_view: {
-    padding: 10,
-    width: 360,
-    height: 120,
+    width: '90%',
     backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center'
   },
+  textinput: {
+    width: '90%',
+    height: 40,
+    fontSize: 18,
+  },
+
   message_view: {
-    width: 360,
-    height: 60,
+    width: '90%',
     color: 'red'
   },
   sigh_up_view: {
-    width: 360,
-    height: 80,
+    width: '90%',
     alignItems: 'center',
     justifyContent: 'center'
-  }
+  },
+
+  submit: {
+    marginRight:10,
+    marginLeft:10,
+    paddingTop:2,
+    backgroundColor:'#68a0cf',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fff',
+    width: 200,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
 });
 
 HomeStack.navigationOptions = {

@@ -7,9 +7,13 @@ import ImagePicker from 'react-native-image-picker';
 import WS from '../socket/ws';
 
 import AsyncStorage from '@react-native-community/async-storage';
-import Store from "../store/store";
 
 import { NavigationEvents } from "react-navigation";
+
+
+import io from 'socket.io-client/dist/socket.io';
+
+const SERVER_URL = 'http://157.245.124.194:5000';
 
 export default class ProfileScreen extends Component {
   constructor(props) {
@@ -50,23 +54,37 @@ export default class ProfileScreen extends Component {
       review_list: [],  // User's review list.
     }
 
-    this.socket = WS.getSocket();
+    this.socket = io(SERVER_URL, { 
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity, 
+      transports: ['websocket'], 
+      jsonp: false,
+    });
     this.base64 = "";
+
+    this.socket.on("read_chunk_response", (message) => {this.response(message)});
+   this.socket.on("transfer_response", (message) => {this.transferResponse(message)});
+   this.socket.on("single_user_res", (message) => {this.userResponse(message)});
+   this.socket.on("review_list_res", (payLoad) => {this.reviewList(payLoad)});
+   this.socket.on("write_file_res", (response) => {this.writeFileRes(response)});
+   
+    this.getUserInfo();
+    
   }
 
   componentDidMount() {
-    console.log("componentDidMount:");
+    // console.log("componentDidMount:");
     // this.getUserFromStore();
-    this.getUserInfo();
+    
     /*
     setTimeout(() => {
       this.getUserInfo();
     }, 10000);
     */
-
-    this.socket.on("read_chunk_response", (message) => {this.response(message)});
-    this.socket.on("transfer_response", (message) => {this.transferResponse(message)});
-    this.socket.on("single_user_res", (message) => {this.userResponse(message)});
+   
+    
     
   }
 
@@ -82,8 +100,11 @@ export default class ProfileScreen extends Component {
 
   transferResponse(message) {
     if (message.code == 0) {
-      const {photo} = this.state;
-      this.writeFile(message.server_file_name, 0, photo.data);
+      if (this.state.photo !== null) {
+        this.setState({server_file_name: message.server_file_name});
+        this.writeFile(message.server_file_name, 0, this.state.photo.data);
+      }
+      
     } 
   }
 
@@ -91,7 +112,6 @@ export default class ProfileScreen extends Component {
     if (message.code == 0) {
       this.setState({user: message.data});
       console.log("Profile user info:");
-      // console.log(this.state.user);
       if (this.state.user.class_name && this.state.class_name === "") {
         this.setState({class_name: this.state.user.class_name});
       }
@@ -126,19 +146,21 @@ export default class ProfileScreen extends Component {
 
   }
   
+  /*
   getMoney = async () => {
     this.socket.emit("get_money", this.state.user_id, function(money) {
       this.setState({money});
     }.bind(this));
   }
+  */
 
   getUserInfo = () => {
     // console.log("Profile user_id: " + this.state.user_id);
     // console.log("Profile user_name: " + this.state.user_name);
     // console.log("Profile head portrait: " + this.state.head_portraits);
     this.socket.emit("get_single_user", this.state.user_id);
-
-    this.getReviewList();
+    this.socket.emit("get_review_list", this.state.user_id);
+    // this.getReviewList();
   }
   
   handleChoosePhoto = async () => {
@@ -158,16 +180,17 @@ export default class ProfileScreen extends Component {
   };
 
   writeFile(filename, offset, data) {
-    this.socket.emit("write_chunk", filename, offset, data, this.state.user_id, function(result) {
-      if (result) {
-        console.log("file upload success.");
-        this.setState({head_portraits: filename});
-        Store.storeHeadPortraits(filename);
-      }
-      else {
-        console.log("file upload failed.");
-      }
-    }.bind(this));
+    this.socket.emit("write_chunk", filename, offset, data, this.state.user_id);
+  }
+
+  writeFileRes = (response) => {
+    if (response.code == 1) {
+      console.log("file upload success.");
+      this.setState({head_portraits: response.filename});
+    }
+    else {
+      console.log("file upload failed.");
+    }
   }
 
   readFile(filename) {
@@ -186,12 +209,7 @@ export default class ProfileScreen extends Component {
       console.log("No file need to upload.");
       return false;
     } 
-    this.socket.emit("start_transfer", fileName, fileSize, function(serverFileName) {
-      if (!serverFileName) {
-        return false;
-      }
-      this.server_file_name = serverFileName;
-    }.bind(this));
+    this.socket.emit("start_transfer", fileName, fileSize);
   }
 
   moveToPersonScreen = (id) => {
@@ -247,12 +265,13 @@ export default class ProfileScreen extends Component {
     this.setState({school: value});
     this.onUpdateProfile();
   }
+
   // Get review list
-  getReviewList = async () => {
-    this.socket.emit("get_review_list", this.state.user_id, (result) => {this.reviewList(result)});
+  getReviewList = () => {
+    // this.socket.emit("get_review_list", this.state.user_id);
   }
 
-  reviewList = async (result) => {
+  reviewList = (result) => {
     review_list = [];
     result.map((review, index) => {
       console.log(review);
@@ -263,7 +282,6 @@ export default class ProfileScreen extends Component {
   }
 
   render() {
-    const { photo } = this.state;
     let user_head_portraits;
     if (this.state.head_portraits) {
       user_head_portraits = <Image style={ styles.head_portrial } source={ { uri: WS.BASE_URL + this.state.head_portraits } } />;

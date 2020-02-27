@@ -81,10 +81,6 @@ export class ChatScreen extends Component {
   }
 
   setInit = () => {
-    // const {navigation} = this.props;
-
-    
-
     console.log("conversation id is " + this.state.conversation_id);
     console.log("sender uid is " + this.state.sender_uid);
     console.log("sender name is " + this.state.sender_name);

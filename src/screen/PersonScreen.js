@@ -7,6 +7,7 @@ import WS from '../socket/ws';
 import { counter } from "@fortawesome/fontawesome-svg-core";
 
 import { NavigationEvents } from "react-navigation";
+import { _ } from "core-js";
 
 function Item({ item_data }) {
   return (
@@ -46,6 +47,8 @@ export default class PersonScreen extends Component {
     
     this.socket = WS.getSocket();
     this.socket.on("single_user_res", (message) => {this.otherUserInfo(message)});
+    this.socket.on("review_list_res", (payLoad) => {this.reviewList(payLoad)});
+    this.socket.on("increase_money_res", (updatedMoney) => {this.updatedMoneyRes(updatedMoney)})
   }
 
   willFocus = (payload) => {
@@ -132,16 +135,6 @@ export default class PersonScreen extends Component {
     });
   }
 
-  getUserId = async () => {
-    try {
-      const user_id = await AsyncStorage.getItem("user_id");
-      this.setState({user_id: user_id});
-    }
-    catch (e) {
-      console.log(e);
-    }
-  }
-
   // Send Reviewer
   sendReview = async () => {
     this.socket.emit("send_review", this.state.other_uid, this.state.user_id, this.state.review_content, function(result) {
@@ -156,7 +149,7 @@ export default class PersonScreen extends Component {
   }
 
   getReviewList = async () => {
-    this.socket.emit("get_review_list", this.state.other_uid, (result) => {this.reviewList(result)});
+    this.socket.emit("get_review_list", this.state.other_uid);
   }
 
   reviewList = async (result) => {
@@ -166,23 +159,17 @@ export default class PersonScreen extends Component {
       review.id = index;
       review_list.push(review);
     });
-    //msg_list_reverse = msg_list.reverse();
     this.setState({review_list: review_list});
   }
 
   onPay = async () => {
-    this.socket.emit("increase_money", this.state.user_id, -5, function(result) {
-      if (result) {
-        console.log("user is pay 5 dollars.");
-        this.socket.emit("increase_money", this.state.other_uid, 5, function(result) {
-          if (result) {
-            console.log("this person get 5 dollars");
-            this.setState({other_user_info: {money: result}});
-          }
-        }.bind(this));
-      }
-      
-    }.bind(this));
+    this.socket.emit("increase_money", this.state.user_id, this.state.other_uid, -5);
+  }
+
+  updatedMoneyRes = (money) => {
+    if (money > 0) {
+      this.setState({other_user_info: {money}});
+    }
   }
 
   render() {
