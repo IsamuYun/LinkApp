@@ -123,14 +123,6 @@ export class ChatScreen extends Component {
     // Remove the event listener
     this.focusListener.remove();
   }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.isFocused !== this.props.isFocused) {
-      // Use the `this.props.isFocused` boolean
-      // Call any action
-      console.log("Chat state changed");
-    }
-  }
   
   async onSend(messages = []) {
     this.setInit();
@@ -147,11 +139,6 @@ export class ChatScreen extends Component {
     // this.getMessages();
     
     
-  }
-
-  componentDidUpdate() {
-    console.log("componentDidUpdate");
-    // this.getMessages();
   }
 
   renewConversationId = () => {

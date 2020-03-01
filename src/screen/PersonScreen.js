@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { StyleSheet, FlatList, View, Text, TextInput, TouchableHighlight, Image } from 'react-native';
 
-import AsyncStorage from '@react-native-community/async-storage';
-
 import WS from '../socket/ws';
 import { counter } from "@fortawesome/fontawesome-svg-core";
 
@@ -125,6 +123,8 @@ export default class PersonScreen extends Component {
   }
 
   moveToChatScreen = () => {
+    console.log("Host uid:" + this.state.other_uid);
+    console.log("Participant uid:" + this.state.user_id);
     this.props.navigation.navigate("Chat", {
       host_uid: this.state.other_uid,
       participant_uid: this.state.user_id,
@@ -154,7 +154,10 @@ export default class PersonScreen extends Component {
 
   reviewList = async (result) => {
     review_list = [];
-    result.map((review, index) => {
+    if (result.data == null) {
+      console.log("Bug");
+    }
+    result.data.map((review, index) => {
       console.log(review);
       review.id = index;
       review_list.push(review);

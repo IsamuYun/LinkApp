@@ -54,24 +54,27 @@ export default class ProfileScreen extends Component {
       review_list: [],  // User's review list.
     }
 
-    this.socket = io(SERVER_URL, { 
+    this.socket = WS.getSocket();
+    
+    this.socket_1 = io(SERVER_URL, { 
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: Infinity, 
-      transports: ['websocket'], 
+      transports: ['websocket'],
+      forceNew: true,
       jsonp: false,
     });
+    
     this.base64 = "";
 
     this.socket.on("read_chunk_response", (message) => {this.response(message)});
-   this.socket.on("transfer_response", (message) => {this.transferResponse(message)});
-   this.socket.on("single_user_res", (message) => {this.userResponse(message)});
-   this.socket.on("review_list_res", (payLoad) => {this.reviewList(payLoad)});
-   this.socket.on("write_file_res", (response) => {this.writeFileRes(response)});
+    this.socket.on("transfer_response", (message) => {this.transferResponse(message)});
+    this.socket.on("single_user_res", (message) => {this.userResponse(message)});
+    this.socket.on("review_list_res", (payLoad) => {this.reviewList(payLoad)});
+    this.socket.on("write_file_res", (response) => {this.writeFileRes(response)});
    
     this.getUserInfo();
-    
   }
 
   componentDidMount() {
@@ -160,6 +163,7 @@ export default class ProfileScreen extends Component {
     // console.log("Profile head portrait: " + this.state.head_portraits);
     this.socket.emit("get_single_user", this.state.user_id);
     this.socket.emit("get_review_list", this.state.user_id);
+    // this.socket.emit("get_review_list", this.state.user_id);
     // this.getReviewList();
   }
   
@@ -273,7 +277,10 @@ export default class ProfileScreen extends Component {
 
   reviewList = (result) => {
     review_list = [];
-    result.map((review, index) => {
+    if (result.data == null) {
+      console.log("Bug");
+    }
+    result.data.map((review, index) => {
       console.log(review);
       review.id = index;
       review_list.push(review);

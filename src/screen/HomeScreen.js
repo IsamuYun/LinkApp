@@ -249,8 +249,8 @@ export const HomeStack = createBottomTabNavigator({
   Person: {
     screen: PersonScreen,
     navigationOptions: {
-      title: 'Person',
-      tabBarLabel: 'Person',
+      title: 'Linked',
+      tabBarLabel: 'Linked',
       tabBarIcon: ({tintColor}) => {
         return <FontAwesomeIcon icon={ faIdBadge } color={ tintColor } size={20}/>;
       }
@@ -259,8 +259,8 @@ export const HomeStack = createBottomTabNavigator({
   Conversation: {
     screen: ConversationScreen,
     navigationOptions: {
-      title: 'Session',
-      tabBarLabel: 'Session',
+      title: 'Chat',
+      tabBarLabel: 'Chat',
       tabBarIcon: ({tintColor}) => {
         return <FontAwesomeIcon icon={ faComments } color={ tintColor } size={20}/>;
       }
